@@ -10,7 +10,8 @@
     "test": "node --experimental-strip-types --test \"tests/*.test.ts\"",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:ui": "vitest run"
   },
   "dependencies": {
     "@langchain/community": "^0.2.32",
