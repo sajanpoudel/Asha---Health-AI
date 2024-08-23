@@ -7,4 +7,9 @@ describe('ChatMessage', () => {
     render(<ChatMessage message={{ type: 'user', content: 'Hello Asha' }} />);
     expect(screen.getByText('Hello Asha')).toBeInTheDocument();
   });
+
+  it('aligns user messages to the right', () => {
+    const { container } = render(<ChatMessage message={{ type: 'user', content: 'Hi' }} />);
+    expect(container.firstChild).toHaveClass('justify-end');
+  });
 });
