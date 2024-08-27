@@ -17,4 +17,9 @@ describe('ChatMessage', () => {
     const { container } = render(<ChatMessage message={{ type: 'ai', content: 'Hi' }} />);
     expect(container.firstChild).toHaveClass('justify-start');
   });
+
+  it('renders html in the message content', () => {
+    render(<ChatMessage message={{ type: 'ai', content: 'Take <strong>deep</strong> breaths' }} />);
+    expect(screen.getByText('deep').tagName).toBe('STRONG');
+  });
 });
