@@ -12,4 +12,9 @@ describe('ChatMessage', () => {
     const { container } = render(<ChatMessage message={{ type: 'user', content: 'Hi' }} />);
     expect(container.firstChild).toHaveClass('justify-end');
   });
+
+  it('aligns assistant messages to the left', () => {
+    const { container } = render(<ChatMessage message={{ type: 'ai', content: 'Hi' }} />);
+    expect(container.firstChild).toHaveClass('justify-start');
+  });
 });
