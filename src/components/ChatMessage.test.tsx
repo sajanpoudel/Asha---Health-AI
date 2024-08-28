@@ -22,4 +22,12 @@ describe('ChatMessage', () => {
     render(<ChatMessage message={{ type: 'ai', content: 'Take <strong>deep</strong> breaths' }} />);
     expect(screen.getByText('deep').tagName).toBe('STRONG');
   });
+
+  it('shows a typing indicator instead of the text while loading', () => {
+    const { container } = render(
+      <ChatMessage message={{ type: 'ai', content: 'Generating response...' }} isLoading />
+    );
+    expect(screen.queryByText('Generating response...')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('.animate-pulse')).toHaveLength(3);
+  });
 });
