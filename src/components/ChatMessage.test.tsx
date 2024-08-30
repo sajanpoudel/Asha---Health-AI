@@ -30,4 +30,9 @@ describe('ChatMessage', () => {
     expect(screen.queryByText('Generating response...')).not.toBeInTheDocument();
     expect(container.querySelectorAll('.animate-pulse')).toHaveLength(3);
   });
+
+  it('uses a dark bubble for the user', () => {
+    const { container } = render(<ChatMessage message={{ type: 'user', content: 'Hi' }} />);
+    expect(container.querySelector('.bg-\\[\\#000000\\]')).not.toBeNull();
+  });
 });
