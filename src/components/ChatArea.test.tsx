@@ -28,4 +28,9 @@ describe('ChatArea', () => {
     );
     expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThanOrEqual(3);
   });
+
+  it('scrolls to the end when it renders', () => {
+    render(<ChatArea getCurrentChat={chat([{ type: 'ai', content: 'Hello' }])} isGeneratingResponse={false} />);
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
+  });
 });
