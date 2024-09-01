@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Asha: AI Health Assistant
 
-## Getting Started
+Asha is an AI-powered health assistant designed to provide a caring, personalized experience for users seeking health advice and emotional support. This project uses advanced natural language processing and speech recognition technologies to create an interactive and empathetic companion.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Natural language conversation with an AI health assistant
+- Voice recognition for hands-free interaction
+- Text-to-speech capabilities for spoken responses
+- Dark mode for comfortable viewing
+- Chat history management
+- Responsive design for various devices
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Technologies Used
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- React.js
+- TypeScript
+- Next.js
+- Web Speech API
+- Llama 3.1 AI Model
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+## Prerequisites
 
-## Learn More
+Before you begin, ensure you have met the following requirements:
 
-To learn more about Next.js, take a look at the following resources:
+- Node.js (v14.0.0 or later)
+- npm (v6.0.0 or later)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Installation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+1. Clone the repository:
+   ```
+   git clone https://github.com/your-username/asha-health-assistant.git
+   ```
 
-## Deploy on Vercel
+2. Navigate to the project directory:
+   ```
+   cd asha-health-assistant
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. Install the dependencies:
+   ```
+   npm install
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+4. Create a `.env.local` file in the root directory and add any necessary environment variables:
+   ```
+   NEXT_PUBLIC_API_URL=your_api_url_here
+   ```
+
+## Running the Application
+
+To run the application in development mode:
