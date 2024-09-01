@@ -21,4 +21,11 @@ describe('ChatArea', () => {
     expect(screen.getByText('Hi')).toBeInTheDocument();
     expect(screen.getByText('Hello there')).toBeInTheDocument();
   });
+
+  it('shows the loading bubble while a response is generated', () => {
+    const { container } = render(
+      <ChatArea getCurrentChat={chat([{ type: 'user', content: 'Hi' }])} isGeneratingResponse />
+    );
+    expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThanOrEqual(3);
+  });
 });
