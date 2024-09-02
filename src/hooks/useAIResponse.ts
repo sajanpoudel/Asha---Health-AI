@@ -1,6 +1,7 @@
 // src/hooks/useAIResponse.ts
 import { useState } from "react";
 import '../types';
+import { analyzeEmotion, addEmotionalNuance } from '../utils/emotionUtils';
 
 const useAIResponse = () => {
   const [emotionalTone, setEmotionalTone] = useState<string>("warm");
@@ -60,47 +61,6 @@ const useAIResponse = () => {
     ${conversationHistory}
     Human: ${userMessage}
     Asha:`;
-  };
-
-  const analyzeEmotion = (text: string): string => {
-    const emotions = {
-      affectionate: ['love', 'care', 'adore', 'cherish', 'fond'],
-      joyful: ['happy', 'excited', 'delighted', 'glad', 'joyful'],
-      sad: ['sad', 'depressed', 'down', 'upset', 'unhappy'],
-      anxious: ['worried', 'anxious', 'nervous', 'stressed', 'uneasy'],
-      angry: ['angry', 'furious', 'annoyed', 'irritated', 'mad'],
-      playful: ['fun', 'playful', 'silly', 'joke', 'tease'],
-      warm: ['nice', 'pleasant', 'comfortable', 'cozy', 'friendly']
-    };
-
-    for (const [emotion, keywords] of Object.entries(emotions)) {
-      if (keywords.some(keyword => text.toLowerCase().includes(keyword))) {
-        return emotion;
-      }
-    }
-    return 'warm';
-  };
-
-  const addEmotionalNuance = (text: string, emotion: string): string => {
-    const emotionalCues = {
-      affectionate: ['[lovingly]', '[tenderly]', '[with deep affection]'],
-      joyful: ['[beaming]', '[with excitement]', '[cheerfully]'],
-      sad: ['[gently]', '[with empathy]', '[comfortingly]'],
-      anxious: ['[reassuringly]', '[calmly]', '[soothingly]'],
-      angry: ['[with understanding]', '[calmly]', '[patiently]'],
-      playful: ['[teasingly]', '[with a light chuckle]', '[playfully]'],
-      warm: ['[warmly]', '[with a smile in my voice]', '[affectionately]']
-    };
-
-    const cues = emotionalCues[emotion as keyof typeof emotionalCues] || emotionalCues.warm;
-    const sentences = text.split('. ');
-    return sentences.map((sentence, index) => {
-      if (index === 0 || Math.random() < 0.4) {
-        const cue = cues[Math.floor(Math.random() * cues.length)];
-        return `${cue} ${sentence}`;
-      }
-      return sentence;
-    }).join('. ');
   };
 
   const addPersonalTouch = (text: string): string => {
