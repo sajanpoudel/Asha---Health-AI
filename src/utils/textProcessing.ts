@@ -1,3 +1,4 @@
+import { decodeHtmlEntities } from './textUtils';
 
 
 export const cleanTextForDisplay = (text: string): string => {
@@ -7,22 +8,6 @@ export const cleanTextForDisplay = (text: string): string => {
     text = text.replace(/\s+/g, ' ').trim();
     text = text.replace(/^[.,!?]+|[.,!?]+$/g, '');
     return text;
-  };
-  
-  export const decodeHtmlEntities = (text: string): string => {
-    const entities: { [key: string]: string } = {
-      '&amp;': '&',
-      '&lt;': '<',
-      '&gt;': '>',
-      '&quot;': '"',
-      '&#039;': "'",
-      '&apos;': "'",
-      '&#x27;': "'",
-      '&#x2F;': '/',
-      '&#32;': ' ',
-      '&nbsp;': ' '
-    };
-    return text.replace(/&[\w\d#]{2,5};/g, entity => entities[entity] || entity);
   };
   
   export const prepareTextForSpeech = (text: string): string => {
