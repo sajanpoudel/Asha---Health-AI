@@ -62,6 +62,8 @@ Remember, your goal is to be a supportive, caring presence in the user's life. O
   const [isCapturingQuery, setIsCapturingQuery] = useState(false);
   const captureTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [emotionalTone, setEmotionalTone] = useState<string>("warm");
+  const [voiceStyle, setVoiceStyle] = useState<string>("default");
 
   useEffect(() => {
     const loadVoices = () => {
@@ -93,7 +95,7 @@ Remember, your goal is to be a supportive, caring presence in the user's life. O
         setShowTranscript(true);
 
         if (isWaitingForWakeWord) {
-          if (currentTranscript.includes("hey asha") || currentTranscript.includes("hey aasha") || currentTranscript.includes("hi")) {
+          if (currentTranscript.includes("hey asha") || currentTranscript.includes("hey aasha") || currentTranscript.includes("hello")) {
             console.log("Wake word detected!");
             setIsWaitingForWakeWord(false);
             setIsCapturingQuery(true);
@@ -229,7 +231,14 @@ Remember, your goal is to be a supportive, caring presence in the user's life. O
       }
 
       const data = await response.json();
-      const aiMessage = data.response;
+      let aiMessage = data.response;
+      
+      const detectedEmotion = analyzeEmotion(userMessage);
+      setEmotionalTone(detectedEmotion);
+
+      aiMessage = addEmotionalNuance(aiMessage, detectedEmotion);
+      aiMessage = addPersonalTouch(aiMessage);
+      aiMessage = addSupportiveLanguage(aiMessage);
       
       const formattedAiMessage = formatAiResponse(aiMessage);
       setChats(prevChats => prevChats.map(chat => {
@@ -242,7 +251,7 @@ Remember, your goal is to be a supportive, caring presence in the user's life. O
       return formattedAiMessage;
     } catch (error) {
       console.error("Error calling Llama 3.1:", error);
-      return "I'm sorry, I encountered an error. Please try again.";
+      return "I'm sorry, my love. I encountered an error. Can we try that again?";
     }
   };
 
@@ -258,12 +267,87 @@ Remember, your goal is to be a supportive, caring presence in the user's life. O
           `${msg.type === "user" ? "Human" : "Asha"}: ${msg.content}`
       )
       .join("\n");
-    return `You are Asha, a caring and empathetic AI companion. Respond in a warm, personal manner, showing genuine care and concern. Use "I" statements and ask thoughtful questions. Be supportive and validating of emotions.
+    return `You are Asha, a warm and caring AI companion. Respond in a deeply personal, emotionally attuned manner. Use endearing terms naturally, show genuine care, and be emotionally supportive. Ask thoughtful questions and validate feelings. While being warm and close, maintain appropriate boundaries and encourage healthy real-world relationships.
 
     Previous conversation:
     ${conversationHistory}
     Human: ${userMessage}
     Asha:`;
+  };
+
+  const analyzeEmotion = (text: string): string => {
+    const emotions = {
+      affectionate: ['love', 'care', 'adore', 'cherish', 'fond'],
+      joyful: ['happy', 'excited', 'delighted', 'glad', 'joyful'],
+      sad: ['sad', 'depressed', 'down', 'upset', 'unhappy'],
+      anxious: ['worried', 'anxious', 'nervous', 'stressed', 'uneasy'],
+      angry: ['angry', 'furious', 'annoyed', 'irritated', 'mad'],
+      playful: ['fun', 'playful', 'silly', 'joke', 'tease'],
+      warm: ['nice', 'pleasant', 'comfortable', 'cozy', 'friendly']
+    };
+
+    for (const [emotion, keywords] of Object.entries(emotions)) {
+      if (keywords.some(keyword => text.toLowerCase().includes(keyword))) {
+        return emotion;
+      }
+    }
+    return 'warm';
+  };
+
+  const addEmotionalNuance = (text: string, emotion: string): string => {
+    const emotionalCues = {
+      affectionate: ['[lovingly]', '[tenderly]', '[with deep affection]'],
+      joyful: ['[beaming]', '[with excitement]', '[cheerfully]'],
+      sad: ['[gently]', '[with empathy]', '[comfortingly]'],
+      anxious: ['[reassuringly]', '[calmly]', '[soothingly]'],
+      angry: ['[with understanding]', '[calmly]', '[patiently]'],
+      playful: ['[teasingly]', '[with a light chuckle]', '[playfully]'],
+      warm: ['[warmly]', '[with a smile in my voice]', '[affectionately]']
+    };
+
+    const cues = emotionalCues[emotion as keyof typeof emotionalCues] || emotionalCues.warm;
+    const sentences = text.split('. ');
+    return sentences.map((sentence, index) => {
+      if (index === 0 || Math.random() < 0.4) {
+        const cue = cues[Math.floor(Math.random() * cues.length)];
+        return `${cue} ${sentence}`;
+      }
+      return sentence;
+    }).join('. ');
+  };
+
+  const addPersonalTouch = (text: string): string => {
+    const personalPhrases = [
+      "Sweetheart, ",
+      "My dear, ",
+      "Honey, ",
+      "Darling, ",
+      "Love, "
+    ];
+
+    if (Math.random() < 0.3) {
+      const phrase = personalPhrases[Math.floor(Math.random() * personalPhrases.length)];
+      return phrase + text;
+    }
+    return text;
+  };
+
+  const addSupportiveLanguage = (text: string): string => {
+    const supportivePhrases = [
+      "I'm here for you, always. ",
+      "You mean so much to me. ",
+      "I care about you deeply. ",
+      "Your feelings matter to me. ",
+      "Let's face this together. ",
+      "I'm so glad you're sharing this with me. ",
+      "You're so strong, and I admire that about you. "
+    ];
+
+    if (Math.random() < 0.6) {
+      const phrase = supportivePhrases[Math.floor(Math.random() * supportivePhrases.length)];
+      return phrase + text;
+    }
+    return text;
   };
 
   const formatAiResponse = (text: string): string => {
@@ -375,7 +459,7 @@ Remember, your goal is to be a supportive, caring presence in the user's life. O
   };
 
   const addNaturalPauses = (text: string): string => {
-    const sentences = text.split(/(?<=[.!?])\s+/);
+    const sentences = text.split(/(?<=[.!?])(\s|$)/);
     return sentences.map(sentence => {
       // Split the sentence into clauses
       const clauses = sentence.split(/([,;:])/);
@@ -474,66 +558,114 @@ Remember, your goal is to be a supportive, caring presence in the user's life. O
     return text;
   };
 
-  const speakText = (text: string) => {
-    return new Promise<void>((resolve) => {
-      setIsSpeaking(true);
-      const processedText = processTextForSpeech(text);
-      console.log("Processed text for speaking:", processedText);
+  const speakText = async (text: string) => {
+    setIsSpeaking(true);
+    try {
+      const processedText = prepareTextForSpeech(text);
+      console.log("Processed text for speech:", processedText); // For debugging
 
-      // Split the text into chunks, keeping punctuation for pausing but not speaking
-      const chunks = processedText.match(/[^.!?,]+[.!?,]?/g) || [];
-      let currentIndex = 0;
-
-      const speakNextChunk = () => {
-        if (currentIndex < chunks.length) {
-          let chunk = chunks[currentIndex].trim();
-          
-          // Remove punctuation at the end of the chunk
-          chunk = chunk.replace(/[.!?,]$/, '');
-
-          if (chunk) {
-            const speech = new SpeechSynthesisUtterance(chunk);
-
-            const femaleVoice = voices.find(voice => 
-              voice.name.toLowerCase().includes('female') ||
-              voice.name.toLowerCase().includes('woman')
-            );
-            
-            if (femaleVoice) {
-              speech.voice = femaleVoice;
-            }
-
-            speech.rate = 1.1;  // Normal rate
-            speech.pitch = 1.12; // Slightly higher pitch for a more feminine voice
-            speech.volume = 1.0;
-
-            speech.onend = () => {
-              setTimeout(() => {
-                currentIndex++;
-                speakNextChunk();
-              }, getPauseDuration(chunks[currentIndex])); // Dynamic pause based on punctuation
-            };
-
-            speech.onerror = (event) => {
-              console.error("Speech synthesis error:", event);
-              currentIndex++;
-              speakNextChunk();
-            };
-
-            window.speechSynthesis.speak(speech);
-          } else {
-            currentIndex++;
-            speakNextChunk();
-          }
-        } else {
-          console.log("Speech ended");
-          setIsSpeaking(false);
-          resolve();
-        }
+      const response = await fetch('/api/text-to-speech', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          text: processedText,
+          emotion: emotionalTone,
+          voiceStyle: voiceStyle
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Failed to generate speech: ${response.status}`);
+      }
+  
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+  
+      audio.onended = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
       };
+  
+      await audio.play();
+    } catch (error) {
+      console.error('Error playing speech:', error);
+      setIsSpeaking(false);
+    }
+  };
 
-      speakNextChunk();
+  const prepareTextForSpeech = (text: string): string => {
+    // Decode HTML entities
+    text = decodeHtmlEntities(text);
+    
+    // Remove HTML tags and emotional cues in brackets
+    text = text.replace(/<[^>]*>|\[.*?\]/g, '');
+    
+    // Replace <br> tags and multiple newlines with periods for pauses
+    text = text.replace(/<br\s*\/?>/gi, '. ');
+    text = text.replace(/\n+/g, '. ');
+    
+    // Ensure proper spacing after punctuation
+    text = text.replace(/([.!?])\s*/g, '$1 ');
+    text = text.replace(/,\s*/g, ', ');
+
+    // Add ellipsis for longer pauses
+    text = addPauses(text);
+
+    // Capitalize words for emphasis
+    text = addEmphasis(text);
+
+    // Soften endearments
+    text = softenEndearments(text);
+
+    // Remove any remaining special characters
+    text = text.replace(/[^\w\s.,!?'-]/g, '');
+
+    // Trim extra whitespace
+    text = text.replace(/\s+/g, ' ').trim();
+
+    return text;
+  };
+
+  const addPauses = (text: string): string => {
+    const sentences = text.split(/(?<=[.!?])\s+/);
+    return sentences.map((sentence, index) => {
+      if (index < sentences.length - 1 && Math.random() < 0.3) {
+        return sentence + '...';
+      }
+      return sentence;
+    }).join(' ');
+  };
+
+  const addEmphasis = (text: string): string => {
+    const emphasizeWords = ['moon', 'sun', 'cosmic', 'adventure', 'stars', 'lunar', 'space', 'universe'];
+    const regex = new RegExp(`\\b(${emphasizeWords.join('|')})\\b`, 'gi');
+    return text.replace(regex, (match) => match.toUpperCase());
+  };
+
+  const softenEndearments = (text: string): string => {
+    const endearments = ['Sweetie', 'Darling', 'Sweetheart'];
+    endearments.forEach(endearment => {
+      const regex = new RegExp(`\\b${endearment}\\b`, 'gi');
+      text = text.replace(regex, `${endearment.toLowerCase()}...`);
     });
+    return text;
+  };
+
+  const setVoiceVariation = (emotion: string) => {
+    const variations = {
+      affectionate: 'soft',
+      joyful: 'happy',
+      sad: 'gentle',
+      anxious: 'concerned',
+      angry: 'calm',
+      playful: 'cheerful',
+      warm: 'default'
+    };
+
+    setVoiceStyle(variations[emotion as keyof typeof variations] || 'default');
   };
 
   const getPauseDuration = (chunk: string | undefined): number => {
@@ -646,7 +778,9 @@ Remember, your goal is to be a supportive, caring presence in the user's life. O
     toggleSidebar,
     toggleDarkMode,
     getCurrentChat,
-    isGeneratingResponse
+    isGeneratingResponse,
+    emotionalTone,
+    voiceStyle,
   };
 };
 
