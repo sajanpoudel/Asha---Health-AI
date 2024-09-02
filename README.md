@@ -49,11 +49,7 @@ Before you begin, ensure you have met the following requirements:
    NEXT_PUBLIC_API_URL=your_api_url_here
    ```
 
-## Running the Application
 
-To run the application in development mode:
-
-```
 ## Piper Installation and Setup
 
 1. Clone the Piper repository:
