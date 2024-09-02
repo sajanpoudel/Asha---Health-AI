@@ -18,6 +18,7 @@ Asha is an AI-powered health assistant designed to provide a caring, personalize
 - Next.js
 - Web Speech API
 - Llama 3.1 AI Model
+- Piper
 
 ## Prerequisites
 
@@ -56,13 +57,13 @@ To run the application in development mode:
 ## Piper Installation and Setup
 
 1. Clone the Piper repository:
-   ```
+   ```bash
    git clone https://github.com/rhasspy/piper.git
    cd piper
    ```
 
 2. Build Piper:
-   ```
+   ```bash
    mkdir build
    cd build
    cmake ..
@@ -70,24 +71,29 @@ To run the application in development mode:
    ```
 
 3. Download the voice model:
-   ```
+   ```bash
    curl -L -o models/en_US-libritts-high.onnx https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/libritts/high/en_US-libritts-high.onnx
    curl -L -o models/en_US-libritts-high.onnx.json https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/libritts/high/en_US-libritts-high.onnx.json
    ```
 
 4. Install espeak-ng:
-   ```
+   ```bash
    brew install espeak-ng
    ```
 
 5. Set up environment variables:
    Add the following to your `.env.local` file:
-   ```
+   ```bash
    PIPER_PATH=/path/to/your/project/piper/build/piper
    PIPER_MODEL_PATH=/path/to/your/project/piper/models/en_US-libritts-high.onnx
    ```
 
 6. Test Piper:
-   ```
+   ```bash
    echo "Hello, this is a test." | ./build/piper --model ./models/en_US-libritts-high.onnx --output_file test.wav
+   ```
+
+7. To run in development mode:
+   ```bash
+   npm run dev
    ```
