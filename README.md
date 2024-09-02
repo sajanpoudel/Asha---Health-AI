@@ -1,53 +1,82 @@
-# Asha: AI Health Assistant
+# Health Assistant with Piper TTS Integration
 
-Asha is an AI-powered health assistant designed to provide a caring, personalized experience for users seeking health advice and emotional support. This project uses advanced natural language processing and speech recognition technologies to create an interactive and empathetic companion.
+This project integrates Piper Text-to-Speech (TTS) for enhanced voice capabilities.
 
-## Features
+## Piper Installation and Setup
 
-- Natural language conversation with an AI health assistant
-- Voice recognition for hands-free interaction
-- Text-to-speech capabilities for spoken responses
-- Dark mode for comfortable viewing
-- Chat history management
-- Responsive design for various devices
-
-## Technologies Used
-
-- React.js
-- TypeScript
-- Next.js
-- Web Speech API
-- Llama 3.1 AI Model
-
-## Prerequisites
-
-Before you begin, ensure you have met the following requirements:
-
-- Node.js (v14.0.0 or later)
-- npm (v6.0.0 or later)
-
-## Installation
-
-1. Clone the repository:
+1. Clone the Piper repository:
    ```
-   git clone https://github.com/your-username/asha-health-assistant.git
+   git clone https://github.com/rhasspy/piper.git
+   cd piper
    ```
 
-2. Navigate to the project directory:
+2. Build Piper:
    ```
-   cd asha-health-assistant
-   ```
-
-3. Install the dependencies:
-   ```
-   npm install
+   mkdir build
+   cd build
+   cmake ..
+   make
    ```
 
-4. Create a `.env.local` file in the root directory and add any necessary environment variables:
+3. Download the voice model:
    ```
-   NEXT_PUBLIC_API_URL=your_api_url_here
+   curl -L -o models/en_US-libritts-high.onnx https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/libritts/high/en_US-libritts-high.onnx
+   curl -L -o models/en_US-libritts-high.onnx.json https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/libritts/high/en_US-libritts-high.onnx.json
    ```
 
-## Running the Application
+4. Install espeak-ng:
+   ```
+   brew install espeak-ng
+   ```
 
-To run the application in development mode:
+5. Set up environment variables:
+   Add the following to your `.env.local` file:
+   ```
+   PIPER_PATH=/path/to/your/project/piper/build/piper
+   PIPER_MODEL_PATH=/path/to/your/project/piper/models/en_US-libritts-high.onnx
+   ```
+
+6. Test Piper:
+   ```
+   echo "Hello, this is a test." | ./build/piper --model ./models/en_US-librit
+'/Users/sajanpoudel/Documents/DATA/UCP/Practice/StartUpIdeas/health-assistant/README.md'cat << EOF >> README.md
+
+## Piper Installation and Setup
+
+1. Clone the Piper repository:
+   ```
+   git clone https://github.com/rhasspy/piper.git
+   cd piper
+   ```
+
+2. Build Piper:
+   ```
+   mkdir build
+   cd build
+   cmake ..
+   make
+   ```
+
+3. Download the voice model:
+   ```
+   curl -L -o models/en_US-libritts-high.onnx https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/libritts/high/en_US-libritts-high.onnx
+   curl -L -o models/en_US-libritts-high.onnx.json https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/libritts/high/en_US-libritts-high.onnx.json
+   ```
+
+4. Install espeak-ng:
+   ```
+   brew install espeak-ng
+   ```
+
+5. Set up environment variables:
+   Add the following to your `.env.local` file:
+   ```
+   PIPER_PATH=/path/to/your/project/piper/build/piper
+   PIPER_MODEL_PATH=/path/to/your/project/piper/models/en_US-libritts-high.onnx
+   ```
+
+6. Test Piper:
+   ```
+   echo "Hello, this is a test." | ./build/piper --model ./models/en_US-libritts-high.onnx --output_file test.wav
+   ```
+
