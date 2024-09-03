@@ -33,4 +33,11 @@ describe('ChatArea', () => {
     render(<ChatArea getCurrentChat={chat([{ type: 'ai', content: 'Hello' }])} isGeneratingResponse={false} />);
     expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
   });
+
+  it('renders no message bubbles for an empty chat', () => {
+    const { container } = render(
+      <ChatArea getCurrentChat={chat([])} isGeneratingResponse={false} />
+    );
+    expect(container.querySelectorAll('p')).toHaveLength(0);
+  });
 });
