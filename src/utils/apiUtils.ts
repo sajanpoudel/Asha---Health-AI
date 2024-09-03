@@ -1,5 +1,4 @@
 // @/utils/apiUtils.ts
-import { NextResponse } from 'next/server';
 
 export const bookAppointment = async (accessToken: string, dateTime: string, timeZone: string) => {
   try {
