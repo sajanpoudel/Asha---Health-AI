@@ -1,0 +1,24 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import Sidebar from './Sidebar';
+
+const baseProps = () => ({
+  isSidebarOpen: true,
+  toggleSidebar: vi.fn(),
+  createNewChat: vi.fn(),
+  chats: [
+    { id: 'a', messages: [{ type: 'user', content: 'My head hurts a lot today' }] },
+    { id: 'b', messages: [] },
+  ] as unknown as Chat[],
+  currentChatId: 'a',
+  switchChat: vi.fn(),
+  isDarkMode: false,
+  setIsDarkMode: vi.fn(),
+});
+
+describe('Sidebar', () => {
+  it('shows the app name when open', () => {
+    render(<Sidebar {...baseProps()} />);
+    expect(screen.getByText('ashaHealth')).toBeInTheDocument();
+  });
+});
