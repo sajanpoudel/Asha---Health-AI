@@ -11,7 +11,7 @@ def is_valid_wav(file_path):
             if wave_file.getframerate() not in [16000, 22050]:
                 return False
         return True
-    except:
+    except (wave.Error, EOFError, OSError):
         return False
 
 def get_dataset_duration(wav_path):
