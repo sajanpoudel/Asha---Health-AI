@@ -55,44 +55,49 @@ def zip_wav_files(wav_path, zip_path):
                     zipf.write(file_path, arcname)
     print(f"WAV files zipped to {zip_path}")
 
-# Usage
-wav_path = "./wav"
-zip_path = "./wav_files.zip"
+def main():
+    # Usage
+    wav_path = "./wav"
+    zip_path = "./wav_files.zip"
 
-audio_count, dataset_dur, invalid_files, hidden_files = get_dataset_duration(wav_path)
+    audio_count, dataset_dur, invalid_files, hidden_files = get_dataset_duration(wav_path)
 
-print(f"Processed {audio_count} valid WAVs with total duration {dataset_dur}.")
+    print(f"Processed {audio_count} valid WAVs with total duration {dataset_dur}.")
 
-if invalid_files:
-    print(f"\nFound {len(invalid_files)} invalid or problematic files:")
-    for file in invalid_files:
-        print(f"  - {file}")
+    if invalid_files:
+        print(f"\nFound {len(invalid_files)} invalid or problematic files:")
+        for file in invalid_files:
+            print(f"  - {file}")
 
-if hidden_files:
-    print(f"\nFound {len(hidden_files)} hidden macOS files:")
-    for file in hidden_files:
-        print(f"  - {file}")
+    if hidden_files:
+        print(f"\nFound {len(hidden_files)} hidden macOS files:")
+        for file in hidden_files:
+            print(f"  - {file}")
 
-print("\nRecommendations:")
-if hidden_files:
-    print("1. Remove the hidden macOS files (starting with '._') as they are not actual WAV files.")
-if invalid_files:
-    print("2. Check and correct the invalid WAV files to ensure they are mono, 16-bit, and either 16000 or 22050 Hz.")
-print("3. After cleaning up the files, run this script again to verify the dataset.")
+    print("\nRecommendations:")
+    if hidden_files:
+        print("1. Remove the hidden macOS files (starting with '._') as they are not actual WAV files.")
+    if invalid_files:
+        print("2. Check and correct the invalid WAV files to ensure they are mono, 16-bit, and either 16000 or 22050 Hz.")
+    print("3. After cleaning up the files, run this script again to verify the dataset.")
 
-# Optional: Remove hidden files
-should_remove = input("\nDo you want to remove the hidden macOS files? (yes/no): ").lower().strip()
-if should_remove == 'yes':
-    removed_count = 0
-    for file in hidden_files:
-        try:
-            os.remove(os.path.join(wav_path, file))
-            removed_count += 1
-        except Exception as e:
-            print(f"Error removing {file}: {str(e)}")
-    print(f"Removed {removed_count} hidden files.")
-    print("Please run the script again to verify the cleaned dataset.")
+    # Optional: Remove hidden files
+    should_remove = input("\nDo you want to remove the hidden macOS files? (yes/no): ").lower().strip()
+    if should_remove == 'yes':
+        removed_count = 0
+        for file in hidden_files:
+            try:
+                os.remove(os.path.join(wav_path, file))
+                removed_count += 1
+            except Exception as e:
+                print(f"Error removing {file}: {str(e)}")
+        print(f"Removed {removed_count} hidden files.")
+        print("Please run the script again to verify the cleaned dataset.")
 
-# Zip WAV files
-zip_wav_files(wav_path, zip_path)
-print(f"WAV files have been zipped to {zip_path}")
+    # Zip WAV files
+    zip_wav_files(wav_path, zip_path)
+    print(f"WAV files have been zipped to {zip_path}")
+
+
+if __name__ == "__main__":
+    main()
