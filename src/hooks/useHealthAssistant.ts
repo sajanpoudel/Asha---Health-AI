@@ -34,9 +34,8 @@ const useHealthAssistant = () => {
   const [emotionalTone, setEmotionalTone] = useState<string>("warm");
   const [voiceStyle, setVoiceStyle] = useState<string>("default");
   const [isRecognitionActive, setIsRecognitionActive] = useState(false);
-  const [recognitionError, setRecognitionError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const recognitionRetryCount = useRef(0);
+  const [recognitionError, setRecognitionError] = useState("");
 
   useEffect(() => {
     const loadVoices = () => {
@@ -51,74 +50,70 @@ const useHealthAssistant = () => {
   }, []);
 
   useEffect(() => {
-    const initializeSpeechRecognition = () => {
-      if ("SpeechRecognition" in window || "webkitSpeechRecognition" in window) {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = true;
-        recognitionRef.current.interimResults = true;
+    if ("SpeechRecognition" in window || "webkitSpeechRecognition" in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
 
-        recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
-          const currentTranscript = Array.from(event.results)
-            .map(result => result[0].transcript)
-            .join(" ")
-            .trim()
-            .toLowerCase();
-          console.log("Detected speech:", currentTranscript);
-          setTranscript(currentTranscript);
-          setShowTranscript(true);
+      recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+        const currentTranscript = Array.from(event.results)
+          .map(result => result[0].transcript)
+          .join(" ")
+          .trim()
+          .toLowerCase();
+        console.log("Detected speech:", currentTranscript);
+        setTranscript(currentTranscript);
+        setShowTranscript(true);
 
-          if (isWaitingForWakeWord) {
-            if (currentTranscript.includes("hey asha") || currentTranscript.includes("hey aasha") || currentTranscript.includes("hello")) {
-              console.log("Wake word detected!");
-              setIsWaitingForWakeWord(false);
-              setIsCapturingQuery(true);
-              setTranscript("Listening for your question...");
-              setUserQuery("");
-            }
-          } else if (isCapturingQuery) {
-            setUserQuery(currentTranscript);
-            
-            if (captureTimeoutRef.current) {
-              clearTimeout(captureTimeoutRef.current);
-            }
-            
-            captureTimeoutRef.current = setTimeout(() => {
-              processQuery(currentTranscript);
-            }, 3000); // Wait for 3 seconds of silence before processing
+        if (isWaitingForWakeWord) {
+          if (currentTranscript.includes("hey asha") || currentTranscript.includes("hey aasha") || currentTranscript.includes("hello")) {
+            console.log("Wake word detected!");
+            setIsWaitingForWakeWord(false);
+            setIsCapturingQuery(true);
+            setTranscript("Listening for your question...");
+            setUserQuery("");
           }
-        };
-
-        recognitionRef.current.onend = () => {
-          setIsListening(false);
-          setIsRecognitionActive(false);
-          console.log("Speech recognition ended");
-          if (!isGeneratingResponse && !isCapturingQuery) {
-            retryStartListening();
+        } else if (isCapturingQuery) {
+          setUserQuery(currentTranscript);
+          
+          if (captureTimeoutRef.current) {
+            clearTimeout(captureTimeoutRef.current);
           }
-        };
+          
+          captureTimeoutRef.current = setTimeout(() => {
+            processQuery(currentTranscript);
+          }, 3000); // Wait for 3 seconds of silence before processing
+        }
+      };
 
-        recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
-          console.error("Speech recognition error:", event.error);
-          setIsListening(false);
-          setIsRecognitionActive(false);
-          setRecognitionError(event.error);
-          if (event.error !== 'aborted' && !isGeneratingResponse && !isCapturingQuery) {
-            retryStartListening();
-          }
-        };
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+        setIsRecognitionActive(false);
+        console.log("Speech recognition ended");
+        if (!isGeneratingResponse && !isCapturingQuery) {
+          setTimeout(startListening, 1000);
+        }
+      };
 
-        startListening();
-      } else {
-        console.log("Speech recognition is not supported in this browser");
-        setRecognitionError("Speech recognition is not supported in this browser");
-      }
-    };
+      recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
+        console.error("Speech recognition error:", event.error);
+        setIsListening(false);
+        setIsRecognitionActive(false);
+        if (event.error !== 'aborted' && !isGeneratingResponse && !isCapturingQuery) {
+          setTimeout(startListening, 1000);
+        }
+      };
 
-    initializeSpeechRecognition();
+      startListening();
+    } else {
+      console.log("Speech recognition is not supported in this browser");
+    }
 
     return () => {
-      stopListening();
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
       if (captureTimeoutRef.current) {
         clearTimeout(captureTimeoutRef.current);
       }
@@ -164,7 +159,6 @@ const useHealthAssistant = () => {
         recognitionRef.current.start();
         setIsListening(true);
         setIsRecognitionActive(true);
-        setRecognitionError(null);
         console.log("Started listening");
         setVoiceIconAnimation({ color: "#D1B8A0", scale: 1.1 });
         if (isWaitingForWakeWord) {
@@ -173,13 +167,10 @@ const useHealthAssistant = () => {
           setTranscript("Listening for your question...");
         }
         setShowTranscript(true);
-        recognitionRetryCount.current = 0;
       } catch (error) {
         console.error("Error starting speech recognition:", error);
         setIsListening(false);
         setIsRecognitionActive(false);
-        setRecognitionError((error as Error).message);
-        retryStartListening();
       }
     }
   };
@@ -190,17 +181,6 @@ const useHealthAssistant = () => {
       setIsListening(false);
       setIsRecognitionActive(false);
       console.log("Stopped listening");
-    }
-  };
-
-  const retryStartListening = () => {
-    if (recognitionRetryCount.current < 3) {
-      recognitionRetryCount.current++;
-      console.log(`Retrying speech recognition (attempt ${recognitionRetryCount.current})`);
-      setTimeout(startListening, 1000);
-    } else {
-      console.error("Failed to start speech recognition after 3 attempts");
-      setRecognitionError("Failed to start speech recognition. Please try again later.");
     }
   };
 

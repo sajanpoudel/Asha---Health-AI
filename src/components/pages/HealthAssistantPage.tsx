@@ -30,7 +30,7 @@ const HealthAssistantPage: React.FC = () => {
     handleSendMessage,
     startListening,
     speakText,
-    recognitionError,
+    recognitionError, // Add this line
   } = useHealthAssistant();
 
   return (
