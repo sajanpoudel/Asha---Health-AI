@@ -19,6 +19,7 @@ Asha is an AI-powered health assistant designed to provide a caring, personalize
 - Web Speech API
 - Llama 3.1 AI Model
 - Piper
+- WaveNet
 
 ## Prerequisites
 
