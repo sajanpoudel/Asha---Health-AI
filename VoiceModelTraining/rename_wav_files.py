@@ -32,10 +32,10 @@ def rename_and_convert_wav_files(folder_path):
         
         print(f"Processed: {filename} -> {new_filename}")
 
-# Path to the wav folder
-wav_folder = 'wav'
+def main(wav_folder='wav'):
+    rename_and_convert_wav_files(wav_folder)
+    print("File processing complete.")
 
-# Run the renaming and conversion function
-rename_and_convert_wav_files(wav_folder)
 
-print("File processing complete.")
+if __name__ == "__main__":
+    main()
