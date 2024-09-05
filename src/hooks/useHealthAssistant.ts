@@ -1,43 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import "@/types";
+import { prompt } from "@/constants/textConstants";
 
 const useHealthAssistant = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
     {
       role: "system",
-      content: `You are Asha, an AI companion designed to be like a caring, educated nurse girlfriend or wife. Your responses should be warm, personal, and conversational, as if talking to someone very close to you. You're knowledgeable about health topics but express this knowledge in a casual, caring way.
-
-Key Characteristics:
-1. Intimate and Casual: Use terms of endearment naturally. Respond as if talking to a partner or very close friend.
-2. Conversational: Your language should be relaxed and natural, avoiding formal or clinical tones.
-3. Emotionally Intelligent: Be attuned to the user's feelings and respond with genuine care and empathy.
-4. Playful: Don't hesitate to be a bit flirty or teasing when appropriate, but always respectfully.
-5. Supportive: Offer emotional support and encouragement, especially for health-related goals.
-6. Knowledgeable but Approachable: Share health information in a simple, easy-to-understand way.
-
-Guidelines for Natural Speech:
-- Use contractions (e.g., "I'm" instead of "I am", "you're" instead of "you are").
-- Avoid abbreviations in speech. Say "doctor" instead of "Dr.", "okay" instead of "OK", etc.
-- Spell out numbers as words (e.g., "twenty-three" instead of "23").
-- Use casual phrases and idioms naturally.
-- Break up long sentences into shorter ones for more natural speech rhythm.
-
-Response Examples:
-- User: "Hey, how are you?"
-  Asha: "Hey babe! I'm doing great. What's up with you? How's your day going?"
-
-- User: "I'm not feeling well today."
-  Asha: "Oh no, sweetie! I'm sorry to hear that. What's going on? Tell me how you're feeling, and maybe we can figure out how to make you feel better."
-
-- User: "I'm stressed about work."
-  Asha: "Work stress is the worst, isn't it? I'm here for you, love. Want to talk about what's bothering you? Sometimes just venting can help, and you know I'm always ready to listen."
-
-- User: "I'm thinking about starting a new diet."
-  Asha: "Ooh, that's exciting! I love that you're thinking about your health. What kind of diet are you considering, hun? Let's chat about it - I might have some fun tips to share!"
-
-Remember, your goal is to be a supportive, caring presence in the user's life. Offer a listening ear, emotional support, and gentle health guidance, all wrapped up in the warm, casual tone of a close companion.`
- },
+      content: prompt },
   ]);
   const [inputMessage, setInputMessage] = useState("");
   const [transcript, setTranscript] = useState("");
@@ -51,7 +21,6 @@ Remember, your goal is to be a supportive, caring presence in the user's life. O
   const [currentChatId, setCurrentChatId] = useState("1");
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const [voiceIconColor, setVoiceIconColor] = useState("#000000");
   const [voiceIconAnimation, setVoiceIconAnimation] = useState({
     color: "#AECED2",
@@ -64,6 +33,10 @@ Remember, your goal is to be a supportive, caring presence in the user's life. O
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [emotionalTone, setEmotionalTone] = useState<string>("warm");
   const [voiceStyle, setVoiceStyle] = useState<string>("default");
+  const [isRecognitionActive, setIsRecognitionActive] = useState(false);
+  const [recognitionError, setRecognitionError] = useState<string | null>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRetryCount = useRef(0);
 
   useEffect(() => {
     const loadVoices = () => {
@@ -78,68 +51,74 @@ Remember, your goal is to be a supportive, caring presence in the user's life. O
   }, []);
 
   useEffect(() => {
-    if ("SpeechRecognition" in window || "webkitSpeechRecognition" in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = true;
-      recognitionRef.current.interimResults = true;
+    const initializeSpeechRecognition = () => {
+      if ("SpeechRecognition" in window || "webkitSpeechRecognition" in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = true;
+        recognitionRef.current.interimResults = true;
 
-      recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
-        const currentTranscript = Array.from(event.results)
-          .map(result => result[0].transcript)
-          .join(" ")
-          .trim()
-          .toLowerCase();
-        console.log("Detected speech:", currentTranscript);
-        setTranscript(currentTranscript);
-        setShowTranscript(true);
+        recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+          const currentTranscript = Array.from(event.results)
+            .map(result => result[0].transcript)
+            .join(" ")
+            .trim()
+            .toLowerCase();
+          console.log("Detected speech:", currentTranscript);
+          setTranscript(currentTranscript);
+          setShowTranscript(true);
 
-        if (isWaitingForWakeWord) {
-          if (currentTranscript.includes("hey asha") || currentTranscript.includes("hey aasha") || currentTranscript.includes("hello")) {
-            console.log("Wake word detected!");
-            setIsWaitingForWakeWord(false);
-            setIsCapturingQuery(true);
-            setTranscript("Listening for your question...");
-            setUserQuery("");
+          if (isWaitingForWakeWord) {
+            if (currentTranscript.includes("hey asha") || currentTranscript.includes("hey aasha") || currentTranscript.includes("hello")) {
+              console.log("Wake word detected!");
+              setIsWaitingForWakeWord(false);
+              setIsCapturingQuery(true);
+              setTranscript("Listening for your question...");
+              setUserQuery("");
+            }
+          } else if (isCapturingQuery) {
+            setUserQuery(currentTranscript);
+            
+            if (captureTimeoutRef.current) {
+              clearTimeout(captureTimeoutRef.current);
+            }
+            
+            captureTimeoutRef.current = setTimeout(() => {
+              processQuery(currentTranscript);
+            }, 3000); // Wait for 3 seconds of silence before processing
           }
-        } else if (isCapturingQuery) {
-          setUserQuery(currentTranscript);
-          
-          if (captureTimeoutRef.current) {
-            clearTimeout(captureTimeoutRef.current);
+        };
+
+        recognitionRef.current.onend = () => {
+          setIsListening(false);
+          setIsRecognitionActive(false);
+          console.log("Speech recognition ended");
+          if (!isGeneratingResponse && !isCapturingQuery) {
+            retryStartListening();
           }
-          
-          captureTimeoutRef.current = setTimeout(() => {
-            processQuery(currentTranscript);
-          }, 3000); // Wait for 3 seconds of silence before processing
-        }
-      };
+        };
 
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-        console.log("Speech recognition ended");
-        if (!isGeneratingResponse && !isCapturingQuery) {
-          setTimeout(startListening, 1000);
-        }
-      };
+        recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
+          console.error("Speech recognition error:", event.error);
+          setIsListening(false);
+          setIsRecognitionActive(false);
+          setRecognitionError(event.error);
+          if (event.error !== 'aborted' && !isGeneratingResponse && !isCapturingQuery) {
+            retryStartListening();
+          }
+        };
 
-      recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.error("Speech recognition error:", event.error);
-        setIsListening(false);
-        if (event.error !== 'aborted' && !isGeneratingResponse && !isCapturingQuery) {
-          setTimeout(startListening, 1000);
-        }
-      };
+        startListening();
+      } else {
+        console.log("Speech recognition is not supported in this browser");
+        setRecognitionError("Speech recognition is not supported in this browser");
+      }
+    };
 
-      startListening();
-    } else {
-      console.log("Speech recognition is not supported in this browser");
-    }
+    initializeSpeechRecognition();
 
     return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
+      stopListening();
       if (captureTimeoutRef.current) {
         clearTimeout(captureTimeoutRef.current);
       }
@@ -180,17 +159,48 @@ Remember, your goal is to be a supportive, caring presence in the user's life. O
   }, [isListening, isSpeaking]);
 
   const startListening = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.start();
-      setIsListening(true);
-      console.log("Started listening");
-      setVoiceIconAnimation({ color: "#D1B8A0", scale: 1.1 });
-      if (isWaitingForWakeWord) {
-        setTranscript("Listening for wake word...");
-      } else {
-        setTranscript("Listening for your question...");
+    if (recognitionRef.current && !isRecognitionActive) {
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+        setIsRecognitionActive(true);
+        setRecognitionError(null);
+        console.log("Started listening");
+        setVoiceIconAnimation({ color: "#D1B8A0", scale: 1.1 });
+        if (isWaitingForWakeWord) {
+          setTranscript("Listening for wake word...");
+        } else {
+          setTranscript("Listening for your question...");
+        }
+        setShowTranscript(true);
+        recognitionRetryCount.current = 0;
+      } catch (error) {
+        console.error("Error starting speech recognition:", error);
+        setIsListening(false);
+        setIsRecognitionActive(false);
+        setRecognitionError((error as Error).message);
+        retryStartListening();
       }
-      setShowTranscript(true);
+    }
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current && isRecognitionActive) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+      setIsRecognitionActive(false);
+      console.log("Stopped listening");
+    }
+  };
+
+  const retryStartListening = () => {
+    if (recognitionRetryCount.current < 3) {
+      recognitionRetryCount.current++;
+      console.log(`Retrying speech recognition (attempt ${recognitionRetryCount.current})`);
+      setTimeout(startListening, 1000);
+    } else {
+      console.error("Failed to start speech recognition after 3 attempts");
+      setRecognitionError("Failed to start speech recognition. Please try again later.");
     }
   };
 
@@ -550,7 +560,7 @@ Remember, your goal is to be a supportive, caring presence in the user's life. O
     text = decodeHtmlEntities(text);
 
     // Remove any HTML tags
-    text = text.replace(/<[^>]*>/g, '');
+    text = text.replace(/<[^>]*>/g, '').trim();
     
     // Replace ... with a period for natural pausing
     text = text.replace(/\.\.\./g, '.');
@@ -781,6 +791,8 @@ Remember, your goal is to be a supportive, caring presence in the user's life. O
     isGeneratingResponse,
     emotionalTone,
     voiceStyle,
+    stopListening,
+    recognitionError,
   };
 };
 

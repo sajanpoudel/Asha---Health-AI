@@ -1,8 +1,8 @@
 import React, { useRef, useEffect } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import useHealthAssistant from '@/hooks/useHealthAssistant';
 import ChatMessage from './ChatMessage';
 import '@/types';
+import { motion } from "framer-motion";
 
 interface ChatAreaProps {
   getCurrentChat: () => Chat;
@@ -19,12 +19,25 @@ const ChatArea: React.FC<ChatAreaProps> = ({ getCurrentChat, isGeneratingRespons
   const currentChat: Chat = getCurrentChat();
 
   return (
-    <ScrollArea className="flex-grow p-6 pb-24">
+    <ScrollArea className="flex-grow p-8 pb-24 bg-background dark:bg-background">
       {currentChat.messages.map((message: Message, index: number) => (
-        <ChatMessage key={index} message={message} />
+        <motion.div
+          key={index}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <ChatMessage message={message} />
+        </motion.div>
       ))}
       {isGeneratingResponse && (
-        <ChatMessage message={{ type: 'ai', content: 'Generating response...' }} isLoading />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <ChatMessage message={{ type: 'ai', content: 'Generating response...' }} isLoading />
+        </motion.div>
       )}
       <div ref={messagesEndRef} />
     </ScrollArea>
