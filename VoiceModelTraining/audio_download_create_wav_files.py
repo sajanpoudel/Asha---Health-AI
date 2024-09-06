@@ -54,25 +54,32 @@ def process_audio(input_file, output_folder, target_sample_rate, segment_duratio
 
     print(f"Audio processed and split into segments in the '{output_folder}' folder.")
 
-# Main execution
-youtube_url = "YOUR_YOUTUBE_URL_HERE"  # Replace with your YouTube URL
-downloaded_file = "downloaded_audio"
-output_folder = "wav"
-target_sample_rate = 22050  # or 16000
-segment_duration = 18  # in seconds
+def main(youtube_url="YOUR_YOUTUBE_URL_HERE", output_folder="wav", target_sample_rate=22050, segment_duration=18):
+    """Download one video, convert it to WAV and split it into segments.
 
-# Download the YouTube video as audio
-actual_filename = download_youtube_audio(youtube_url, downloaded_file)
-print(f"Downloaded file: {actual_filename}")
+    target_sample_rate is 22050, or 16000 for some models. segment_duration is in seconds.
+    """
+    downloaded_file = "downloaded_audio"
 
-# Convert to WAV
-wav_filename = actual_filename + ".wav"
-convert_to_wav(actual_filename, wav_filename)
-print(f"Converted to WAV: {wav_filename}")
+    # Download the YouTube video as audio
+    actual_filename = download_youtube_audio(youtube_url, downloaded_file)
+    print(f"Downloaded file: {actual_filename}")
 
-# Process the downloaded audio
-process_audio(wav_filename, output_folder, target_sample_rate, segment_duration)
+    # Convert to WAV
+    wav_filename = actual_filename + ".wav"
+    convert_to_wav(actual_filename, wav_filename)
+    print(f"Converted to WAV: {wav_filename}")
 
-# Clean up the downloaded files
-os.remove(actual_filename)
-os.remove(wav_filename)
+    # Process the downloaded audio
+    process_audio(wav_filename, output_folder, target_sample_rate, segment_duration)
+
+    # Clean up the downloaded files
+    os.remove(actual_filename)
+    os.remove(wav_filename)
+
+
+if __name__ == "__main__":
+    import sys
+
+    # Usage: python audio_download_create_wav_files.py <youtube url>
+    main(*sys.argv[1:2])
