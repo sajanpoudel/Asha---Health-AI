@@ -28,8 +28,7 @@ Asha is an AI-powered health assistant designed to provide a caring, personalize
 
 Before you begin, ensure you have met the following requirements:
 
-- Node.js (v14.0.0 or later)
-- npm (v6.0.0 or later)
+
 - Node.js (v14 or later)
 - npm (v6 or later)
 - A Google Cloud Platform account with Gmail and Calendar APIs enabled
