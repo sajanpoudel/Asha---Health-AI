@@ -21,4 +21,9 @@ describe('Sidebar', () => {
     render(<Sidebar {...baseProps()} />);
     expect(screen.getByText('ashaHealth')).toBeInTheDocument();
   });
+
+  it('titles an empty chat New Chat', () => {
+    render(<Sidebar {...baseProps()} />);
+    expect(screen.getAllByText('New Chat').length).toBeGreaterThanOrEqual(2);
+  });
 });
