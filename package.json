@@ -20,6 +20,7 @@
     "child_process": "^1.0.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "dompurify": "^3.1.6",
     "framer-motion": "^11.5.2",
     "googleapis": "^144.0.0",
     "jwt-decode": "^4.0.0",
@@ -35,6 +36,7 @@
     "util": "^0.12.4"
   },
   "devDependencies": {
+    "@types/dompurify": "^3.0.5",
     "@types/jwt-decode": "^3.1.0",
     "@types/node": "^20",
     "@types/react": "^18",

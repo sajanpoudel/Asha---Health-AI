@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import "@/types";
 import { prompt } from "@/constants/textConstants";
+import DOMPurify from 'dompurify';
+
 
 const useHealthAssistant = (accessToken: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -296,7 +298,8 @@ const useHealthAssistant = (accessToken: string) => {
       }
   
       let aiMessage = await generateLlamaResponse(constructPrompt(userMessage, getCurrentChat().messages));
-  
+      const formattedAiMessage = formatAiResponse(aiMessage);
+      updateChatMessages(userMessage, formattedAiMessage);
       aiMessage = aiMessage.replace(/\[.*?\]/g, '')
         .replace(/•/g, 'Bullet point:')
         .replace(/\n/g, ' ');
@@ -308,10 +311,8 @@ const useHealthAssistant = (accessToken: string) => {
       aiMessage = addPersonalTouch(aiMessage);
       aiMessage = addSupportiveLanguage(aiMessage);
       
-      const formattedAiMessage = formatAiResponse(aiMessage);
-      updateChatMessages(userMessage, formattedAiMessage);
+   
       
-      await speakText(formattedAiMessage);
   
       return formattedAiMessage;
     } catch (error) {
@@ -389,7 +390,6 @@ const useHealthAssistant = (accessToken: string) => {
 Now, let me give you a gentle hug virtually and offer my continued support. [affectionately] It takes a lot of courage to prioritize your health, and I'm so proud of you for doing that! Remember, taking care of yourself is an act of self-love and self-care.
 
 Is there anything else you'd like to know about the appointment or any concerns you'd like to discuss?`;
-
     updateChatMessages(userMessage, aiResponse);
     return aiResponse;
   };
@@ -581,37 +581,32 @@ Is there anything else you'd like to know about the appointment or any concerns 
     return text;
   };
 
+
   const formatAiResponse = (text: string): string => {
-    const escapeHtml = (unsafe: string) => {
-      return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    };
+    // Remove emotional cues in brackets
+    let processedText = text.replace(/\[.*?\]\s*/g, '');
+  
+    // Convert markdown-style formatting to HTML
+    processedText = processedText.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+    processedText = processedText.replace(/\*(.*?)\*/g, "<em>$1</em>");
+    processedText = processedText.replace(/`([^`]+)`/g, "<code>$1</code>");
+  
+    // Convert URLs to clickable links
+    processedText = processedText.replace(
+      /(https?:\/\/[^\s]+)/g,
+      '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+    );
+  
+  // Replace <br> tags with actual line breaks for HTML rendering
+  processedText = processedText.replace(/<br\s*\/?>/gi, '<br>');
 
-    const parts = text.split(/(```[\s\S]*?```)/);
+  // Replace single newlines with <br> tags
+  processedText = processedText.replace(/\n/g, '<br>');
 
-    const processedParts = parts.map((part) => {
-      if (part.startsWith('```') && part.endsWith('```')) {
-        const [, language, code] = part.match(/```(\w*)\n?([\s\S]*?)```/) || [, '', part.slice(3, -3)];
-        const languageClass = language ? `language-${language}` : '';
-        const escapedCode = escapeHtml(code.trim());
-        return `<pre class="bg-gray-100 dark:bg-gray-800 p-2 rounded-md my-2 overflow-x-auto"><code class="${languageClass}">${escapedCode}</code></pre>`;
-      } else {
-        let processedText = escapeHtml(part);
-        processedText = processedText.replace(/`([^`]+)`/g, (match, code) => {
-          return `<code class="bg-gray-100 dark:bg-gray-800 px-1 rounded">${escapeHtml(code)}</code>`;
-        });
-        processedText = processedText.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-        processedText = processedText.replace(/\*(.*?)\*/g, "<em>$1</em>");
-        processedText = processedText.replace(/\n/g, "<br>");
-        return processedText;
-      }
-    });
+  // Sanitize the HTML to prevent XSS attacks
+  processedText = DOMPurify.sanitize(processedText, { ADD_ATTR: ['target'] });
 
-    return processedParts.join('');
+    return processedText;
   };
 
   const stripHtmlAndFormatting = (text: string): string => {
