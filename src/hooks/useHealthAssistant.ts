@@ -202,38 +202,108 @@ const useHealthAssistant = (accessToken: string) => {
     return chats.find(chat => chat.id === currentChatId) || chats[0];
   };
 
+  const generateLlamaResponse = async (prompt: string): Promise<string> => {
+    const response = await fetch("http://localhost:11434/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "llama3.1",
+        prompt,
+        stream: false,
+      }),
+    });
+  
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  
+    const data = await response.json();
+    return data.response.trim();
+  };
+  
   const handleAiResponse = async (userMessage: string) => {
     try {
       console.log("Received user message:", userMessage);
-
+  
       if (userMessage.toLowerCase().includes('book') || 
           userMessage.toLowerCase().includes('make') || 
           userMessage.toLowerCase().includes('schedule') && 
           userMessage.toLowerCase().includes('appointment')) {
         return await handleAppointmentBooking(userMessage);
       }
-
-      // For other types of messages, use the existing AI response logic
-      const response = await fetch("http://localhost:11434/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "llama3.1",
-          prompt: constructPrompt(userMessage, getCurrentChat().messages),
-          stream: false,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+  
+      if (userMessage.toLowerCase().includes('email') || 
+          userMessage.toLowerCase().includes('mail') || 
+          userMessage.toLowerCase().includes('inbox')) {
+        console.log("Detected email-related query. Calling readEmail function.");
+        let emailQuery = userMessage.toLowerCase();
+        
+        if (emailQuery.includes('unread') || emailQuery.includes('new')) {
+          emailQuery = 'unread';
+        } else if (emailQuery.includes('important')) {
+          emailQuery = 'important';
+        } else if (emailQuery.includes('sent')) {
+          emailQuery = 'sent';
+        } else if (emailQuery.includes('draft')) {
+          emailQuery = 'draft';
+        } else {
+          emailQuery = 'recent';
+        }
+        
+        let emailData;
+        try {
+          const emailResponse = await readEmail(emailQuery);
+          const jsonString = emailResponse.match(/\[.*\]/)?.[0];
+          emailData = jsonString ? JSON.parse(jsonString) : [];
+        } catch (error) {
+          console.error("Failed to parse email response:", error);
+          emailData = [];
+        }
+        
+        const getEmailSummary = async (email: any) => {
+          const emailContent = `
+            Subject: ${email.subject}
+            From: ${email.from}
+            Preview: ${email.snippet}
+          `;
+          const summary = await generateLlamaResponse(`Summarize the following email in 2-3 sentences, highlighting the key points. Do not include phrases like "Here is a summary" or "In summary". Just provide the concise summary:\n\n${emailContent}`);
+          return summary.trim();
+        };
+        
+        let aiResponse = '';
+  
+        if (emailData && emailData.length > 0) {
+          const emailSummaries = await Promise.all(emailData.slice(0, 3).map(async (email: any, index: number) => {
+            const sender = email.from.match(/<(.+)>/)?.[1] || email.from;
+            const summary = await getEmailSummary(email);
+            return `Email ${index + 1} was sent by ${sender}. ${summary}`;
+          }));
+  
+          const emailSummary = emailSummaries.join('\n\n');
+          aiResponse = `[warmly] Sweetie, I've checked your emails for you. Here's a detailed summary of your ${emailQuery} emails:\n\n${emailSummary}\n\nWould you like me to elaborate on any of these emails?`;
+        }
+        else {
+          aiResponse = `[gently] I'm sorry, darling. I couldn't find any ${emailQuery} emails at the moment. Is there anything else I can help you with?`;
+        }
+  
+        console.log("Updating chat with AI response:", aiResponse);
+        updateChatMessages(userMessage, aiResponse);
+        
+        setTranscript("AI Response: " + aiResponse);
+        setShowTranscript(true);
+  
+        return aiResponse;
       }
-
-      const data = await response.json();
-      let aiMessage = data.response;
+  
+      let aiMessage = await generateLlamaResponse(constructPrompt(userMessage, getCurrentChat().messages));
+  
+      aiMessage = aiMessage.replace(/\[.*?\]/g, '')
+        .replace(/•/g, 'Bullet point:')
+        .replace(/\n/g, ' ');
       
       const detectedEmotion = analyzeEmotion(userMessage);
       setEmotionalTone(detectedEmotion);
-
+  
       aiMessage = addEmotionalNuance(aiMessage, detectedEmotion);
       aiMessage = addPersonalTouch(aiMessage);
       aiMessage = addSupportiveLanguage(aiMessage);
@@ -241,6 +311,8 @@ const useHealthAssistant = (accessToken: string) => {
       const formattedAiMessage = formatAiResponse(aiMessage);
       updateChatMessages(userMessage, formattedAiMessage);
       
+      await speakText(formattedAiMessage);
+  
       return formattedAiMessage;
     } catch (error) {
       console.error("Error in handleAiResponse:", error);
@@ -297,7 +369,6 @@ const useHealthAssistant = (accessToken: string) => {
 
     console.log(`User requested time: ${time}`);
     console.log(`Parsed date and time: ${appointmentDate.toLocaleString('en-US', { timeZone: userTimeZone })}`);
-    console.log(`UTC date and time: ${dateTime}`);
     console.log(`Attempting to book appointment for ${dateTime} (${hours}:${minutes.toString().padStart(2, '0')} ${meridiem}) with ${doctorName} in time zone ${userTimeZone}`);
     const bookingResponse = await bookAppointment(dateTime, userTimeZone);
     console.log(`Booking response: ${bookingResponse}`);
@@ -392,6 +463,7 @@ Is there anything else you'd like to know about the appointment or any concerns 
 
   const readEmail = async (query: string): Promise<string> => {
     try {
+      console.log("Attempting to read email with query:", query);
       const response = await fetch('/api/google/gmail', {
         method: 'POST',
         headers: {
@@ -399,19 +471,19 @@ Is there anything else you'd like to know about the appointment or any concerns 
         },
         body: JSON.stringify({ accessToken, query }),
       });
-
+  
       if (!response.ok) {
         throw new Error('Failed to read email');
       }
-
+  
       const data = await response.json();
+      console.log("Received email data:", data);
       return data.message;
     } catch (error) {
-      console.error('Error booking appointment:', error);
-      return 'Failed to book appointment. Please try again.';
+      console.error('Error reading email:', error);
+      return 'I encountered an error while trying to read your email. Could you please try again?';
     }
   };
-
 
 
   const constructPrompt = (

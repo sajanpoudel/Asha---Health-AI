@@ -9,31 +9,50 @@ export async function POST(request: Request) {
   }
 
   try {
-    const auth = new google.auth.OAuth2(
-      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET
-    );
+    const auth = new google.auth.OAuth2();
     auth.setCredentials({ access_token: accessToken });
 
     const gmail = google.gmail({ version: 'v1', auth });
-    const response = await gmail.users.messages.list({
-      userId: 'me',
-      q: query,
+
+    let messages;
+    switch (query) {
+      case 'unread':
+        messages = await gmail.users.messages.list({ userId: 'me', q: 'is:unread' });
+        break;
+      case 'important':
+        messages = await gmail.users.messages.list({ userId: 'me', q: 'is:important' });
+        break;
+      case 'sent':
+        messages = await gmail.users.messages.list({ userId: 'me', labelIds: ['SENT'] });
+        break;
+      case 'draft':
+        messages = await gmail.users.messages.list({ userId: 'me', labelIds: ['DRAFT'] });
+        break;
+      case 'recent':
+      default:
+        messages = await gmail.users.messages.list({ userId: 'me', maxResults: 5 });
+        break;
+    }
+
+    // Process and format the email data as needed
+    const formattedMessages = await Promise.all(messages.data.messages?.map(async (message) => {
+      if (!message.id) {
+        return null;
+      }
+      const fullMessage = await gmail.users.messages.get({ userId: 'me', id: message.id });
+      
+      const headers = fullMessage.data.payload?.headers ?? [];
+      return {
+        subject: headers.find(header => header.name === 'Subject')?.value ?? 'No Subject',
+        from: headers.find(header => header.name === 'From')?.value ?? 'Unknown Sender',
+        snippet: fullMessage.data.snippet ?? 'No preview available'
+      };
+    }).filter((message): message is NonNullable<typeof message> => message !== null) ?? []);
+
+    return NextResponse.json({ 
+      message: `Here are your ${query} emails: ${JSON.stringify(formattedMessages)}` 
     });
 
-    if (response.data.messages && response.data.messages.length > 0) {
-      const messageId = response.data.messages[0].id;
-      const message = await gmail.users.messages.get({
-        userId: 'me',
-        id: messageId,
-      });
-
-      const body = message.data.payload?.parts?.[0]?.body?.data || '';
-      const decodedBody = Buffer.from(body, 'base64').toString('utf-8');
-      return NextResponse.json({ message: decodedBody });
-    } else {
-      return NextResponse.json({ message: 'No emails found matching your query.' }, { status: 404 });
-    }
   } catch (error) {
     console.error('Error reading email:', error);
     return NextResponse.json({ message: 'Failed to read email. Please try again.' }, { status: 500 });
