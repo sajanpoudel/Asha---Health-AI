@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import "@/types";
 import { prompt } from "@/constants/textConstants";
 
-const useHealthAssistant = () => {
+const useHealthAssistant = (accessToken: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
     {
@@ -188,9 +188,9 @@ const useHealthAssistant = () => {
     const newChat: Chat = {
       id: Date.now().toString(),
       name: `Chat ${chats.length + 1}`,
-      messages: [],
+      messages: []
     };
-    setChats((prevChats) => [...prevChats, newChat]);
+    setChats([...chats, newChat]);
     setCurrentChatId(newChat.id);
   };
 
@@ -199,16 +199,24 @@ const useHealthAssistant = () => {
   };
 
   const getCurrentChat = (): Chat => {
-    return chats.find((chat) => chat.id === currentChatId) || chats[0];
+    return chats.find(chat => chat.id === currentChatId) || chats[0];
   };
 
   const handleAiResponse = async (userMessage: string) => {
     try {
+      console.log("Received user message:", userMessage);
+
+      if (userMessage.toLowerCase().includes('book') || 
+          userMessage.toLowerCase().includes('make') || 
+          userMessage.toLowerCase().includes('schedule') && 
+          userMessage.toLowerCase().includes('appointment')) {
+        return await handleAppointmentBooking(userMessage);
+      }
+
+      // For other types of messages, use the existing AI response logic
       const response = await fetch("http://localhost:11434/api/generate", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "llama3.1",
           prompt: constructPrompt(userMessage, getCurrentChat().messages),
@@ -231,17 +239,99 @@ const useHealthAssistant = () => {
       aiMessage = addSupportiveLanguage(aiMessage);
       
       const formattedAiMessage = formatAiResponse(aiMessage);
-      setChats(prevChats => prevChats.map(chat => {
-        if (chat.id === currentChatId) {
-          return { ...chat, messages: [...chat.messages, { type: 'user', content: userMessage }, { type: 'ai', content: formattedAiMessage }] };
-        }
-        return chat;
-      }));
+      updateChatMessages(userMessage, formattedAiMessage);
       
       return formattedAiMessage;
     } catch (error) {
-      console.error("Error calling Llama 3.1:", error);
-      return "I'm sorry, my love. I encountered an error. Can we try that again?";
+      console.error("Error in handleAiResponse:", error);
+      return "I'm sorry, I encountered an error. Can we try that again?";
+    }
+  };
+
+  const handleAppointmentBooking = async (userMessage: string): Promise<string> => {
+    console.log("Detected appointment booking request");
+
+    const dateTimeMatch = userMessage.match(/(\d{1,2}:\d{2}\s*(?:am|pm))/i) || [null, "1:00 pm"];
+    const dateMatch = userMessage.match(/(tomorrow|today|\d{1,2}\/\d{1,2}\/\d{4})/i) || [null, "tomorrow"];
+    const doctorMatch = userMessage.match(/doctor(?:'s name)?\s+(\w+\s*\w*)/i) || [null, ""];
+
+    const time = dateTimeMatch[1] || "1:00 pm";
+    const date = dateMatch[1].toLowerCase() === 'tomorrow' ? 
+      new Date(new Date().setDate(new Date().getDate() + 1)) : 
+      new Date();
+    const [hours, minutes] = time.split(':');
+    const meridiem = time.toLowerCase().includes('pm') ? 'PM' : 'AM';
+    
+    date.setHours(
+      meridiem === 'PM' ? (parseInt(hours) % 12) + 12 : parseInt(hours) % 12,
+      parseInt(minutes)
+    );
+
+    const doctorName = doctorMatch[1] || "your doctor";
+    const dateTime = date.toISOString();
+
+    console.log(`Attempting to book appointment for ${dateTime} with ${doctorName}`);
+    const bookingResponse = await bookAppointment(dateTime);
+    console.log(`Booking response: ${bookingResponse}`);
+
+    const formattedDate = date.toLocaleString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    });
+
+    const aiResponse = `[with a smile in my voice] Sweet friend! I've taken care of booking the appointment for you with ${doctorName} for ${formattedDate}. ${bookingResponse}
+
+Now, let me give you a gentle hug virtually and offer my continued support. [affectionately] It takes a lot of courage to prioritize your health, and I'm so proud of you for doing that! Remember, taking care of yourself is an act of self-love and self-care.
+
+Is there anything else you'd like to know about the appointment or any concerns you'd like to discuss?`;
+
+    updateChatMessages(userMessage, aiResponse);
+    return aiResponse;
+  };
+
+  const updateChatMessages = (userMessage: string, aiResponse: string) => {
+    setChats(prevChats => prevChats.map(chat => {
+      if (chat.id === currentChatId) {
+        return { 
+          ...chat, 
+          messages: [
+            ...chat.messages, 
+            { type: 'user', content: userMessage }, 
+            { type: 'ai', content: aiResponse }
+          ] 
+        };
+      }
+      return chat;
+    }));
+  };
+
+  const processQuery = async (query: string) => {
+    if (query.trim()) {
+      setIsCapturingQuery(false);
+      setIsGeneratingResponse(true);
+      console.log("Final user query:", query);
+      const aiResponse = await handleAiResponse(query);
+      console.log("AI Response:", aiResponse);
+      setTranscript("AI Response: " + aiResponse);
+      setShowTranscript(true);
+      if (typeof aiResponse === 'string') {
+        await speakText(aiResponse);
+      } else {
+        console.error("Unexpected AI response type:", typeof aiResponse);
+      }
+      setIsWaitingForWakeWord(true);
+      setUserQuery("");
+      setIsGeneratingResponse(false);
+      setTimeout(() => {
+        setTranscript("Listening for wake word...");
+        startListening();
+      }, 1000);
     }
   };
 
@@ -726,53 +816,102 @@ const useHealthAssistant = () => {
     setIsDarkMode(!isDarkMode);
   };
 
-  const processQuery = async (query: string) => {
-    if (query.trim()) {
-      setIsCapturingQuery(false);
-      setIsGeneratingResponse(true);
-      console.log("Final user query:", query);
-      const aiResponse = await handleAiResponse(query);
-      console.log("AI Response:", aiResponse);
-      setTranscript("AI Response: " + aiResponse);
-      setShowTranscript(true);
-      await speakText(aiResponse);
-      setIsWaitingForWakeWord(true);
-      setUserQuery("");
-      setIsGeneratingResponse(false);
-      setTimeout(() => {
-        setTranscript("Listening for wake word...");
-        startListening();
-      }, 1000);
+  const bookAppointment = async (dateTime: string): Promise<string> => {
+    try {
+      console.log(`Sending request to book appointment for ${dateTime}`);
+      const response = await fetch('/api/google/calendar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ accessToken, dateTime }),
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to book appointment: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        console.error(`Error response: ${errorText}`);
+        throw new Error(`Failed to book appointment: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log(`Received response from calendar API: ${JSON.stringify(data)}`);
+      return data.message;
+    } catch (error) {
+      console.error('Error booking appointment:', error);
+      return 'Failed to book appointment. Please try again.';
+    }
+  };
+
+  const readEmail = async (query: string): Promise<string> => {
+    try {
+      const response = await fetch('/api/google/gmail', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ accessToken, query }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to read email');
+      }
+
+      const data = await response.json();
+      return data.message;
+    } catch (error) {
+      console.error('Error reading email:', error);
+      return 'Failed to read email. Please try again.';
     }
   };
 
   return {
-    chats,
-    currentChatId,
+    messages,
+    setMessages,
+    chatHistory,
+    setChatHistory,
     inputMessage,
     setInputMessage,
-    isListening,
-    isSpeaking,
-    isWaitingForWakeWord,
     transcript,
+    setTranscript,
+    isListening,
+    setIsListening,
+    isWaitingForWakeWord,
+    setIsWaitingForWakeWord,
+    isSpeaking,
+    setIsSpeaking,
+    showTranscript,
+    setShowTranscript,
+    chats,
+    setChats,
+    currentChatId,
+    setCurrentChatId,
     isDarkMode,
     setIsDarkMode,
     isSidebarOpen,
-    voiceIconColor,
+    setIsSidebarOpen,
     voiceIconAnimation,
-    handleSendMessage,
+    setVoiceIconAnimation,
+    isGeneratingResponse,
+    setIsGeneratingResponse,
+    userQuery,
+    setUserQuery,
+    isCapturingQuery,
+    setIsCapturingQuery,
+    emotionalTone,
+    voiceStyle,
+    recognitionError,
     startListening,
+    stopListening,
+    handleSendMessage,
     speakText,
     createNewChat,
     switchChat,
+    getCurrentChat,
     toggleSidebar,
     toggleDarkMode,
-    getCurrentChat,
-    isGeneratingResponse,
-    emotionalTone,
-    voiceStyle,
-    stopListening,
-    recognitionError,
+    bookAppointment,
+    readEmail,
   };
 };
 
