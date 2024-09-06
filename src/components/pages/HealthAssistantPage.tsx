@@ -8,7 +8,16 @@ import MessageInput from '../MessageInput';
 import '@/types';
 import { motion } from "framer-motion";
 
-const HealthAssistantPage: React.FC = () => {
+interface HealthAssistantPageProps {
+  personalData: {
+    name: string;
+    email: string;
+    picture: string;
+  };
+  accessToken: string;
+}
+
+const HealthAssistantPage: React.FC<HealthAssistantPageProps> = ({ personalData, accessToken }) => {
   const {
     isDarkMode,
     isSidebarOpen,
@@ -30,8 +39,8 @@ const HealthAssistantPage: React.FC = () => {
     handleSendMessage,
     startListening,
     speakText,
-    recognitionError, // Add this line
-  } = useHealthAssistant();
+    recognitionError,
+  } = useHealthAssistant(accessToken);
 
   return (
     <div className={`flex h-screen ${isDarkMode ? 'dark' : ''} bg-background dark:bg-background font-sans relative overflow-hidden`}>

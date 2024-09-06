@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import "@/types";
 import { prompt } from "@/constants/textConstants";
+import DOMPurify from 'dompurify';
 
-const useHealthAssistant = () => {
+
+const useHealthAssistant = (accessToken: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
     {
@@ -188,9 +190,9 @@ const useHealthAssistant = () => {
     const newChat: Chat = {
       id: Date.now().toString(),
       name: `Chat ${chats.length + 1}`,
-      messages: [],
+      messages: []
     };
-    setChats((prevChats) => [...prevChats, newChat]);
+    setChats([...chats, newChat]);
     setCurrentChatId(newChat.id);
   };
 
@@ -199,51 +201,290 @@ const useHealthAssistant = () => {
   };
 
   const getCurrentChat = (): Chat => {
-    return chats.find((chat) => chat.id === currentChatId) || chats[0];
+    return chats.find(chat => chat.id === currentChatId) || chats[0];
   };
 
+  const generateLlamaResponse = async (prompt: string): Promise<string> => {
+    const response = await fetch("http://localhost:11434/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "llama3.1",
+        prompt,
+        stream: false,
+      }),
+    });
+  
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  
+    const data = await response.json();
+    return data.response.trim();
+  };
+  
   const handleAiResponse = async (userMessage: string) => {
     try {
-      const response = await fetch("http://localhost:11434/api/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "llama3.1",
-          prompt: constructPrompt(userMessage, getCurrentChat().messages),
-          stream: false,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      console.log("Received user message:", userMessage);
+  
+      if (userMessage.toLowerCase().includes('book') || 
+          userMessage.toLowerCase().includes('make') || 
+          userMessage.toLowerCase().includes('schedule') && 
+          userMessage.toLowerCase().includes('appointment')) {
+        return await handleAppointmentBooking(userMessage);
       }
-
-      const data = await response.json();
-      let aiMessage = data.response;
+  
+      if (userMessage.toLowerCase().includes('email') || 
+          userMessage.toLowerCase().includes('mail') || 
+          userMessage.toLowerCase().includes('inbox')) {
+        console.log("Detected email-related query. Calling readEmail function.");
+        let emailQuery = userMessage.toLowerCase();
+        
+        if (emailQuery.includes('unread') || emailQuery.includes('new')) {
+          emailQuery = 'unread';
+        } else if (emailQuery.includes('important')) {
+          emailQuery = 'important';
+        } else if (emailQuery.includes('sent')) {
+          emailQuery = 'sent';
+        } else if (emailQuery.includes('draft')) {
+          emailQuery = 'draft';
+        } else {
+          emailQuery = 'recent';
+        }
+        
+        let emailData;
+        try {
+          const emailResponse = await readEmail(emailQuery);
+          const jsonString = emailResponse.match(/\[.*\]/)?.[0];
+          emailData = jsonString ? JSON.parse(jsonString) : [];
+        } catch (error) {
+          console.error("Failed to parse email response:", error);
+          emailData = [];
+        }
+        
+        const getEmailSummary = async (email: any) => {
+          const emailContent = `
+            Subject: ${email.subject}
+            From: ${email.from}
+            Preview: ${email.snippet}
+          `;
+          const summary = await generateLlamaResponse(`Summarize the following email in 2-3 sentences, highlighting the key points. Do not include phrases like "Here is a summary" or "In summary". Just provide the concise summary:\n\n${emailContent}`);
+          return summary.trim();
+        };
+        
+        let aiResponse = '';
+  
+        if (emailData && emailData.length > 0) {
+          const emailSummaries = await Promise.all(emailData.slice(0, 3).map(async (email: any, index: number) => {
+            const sender = email.from.match(/<(.+)>/)?.[1] || email.from;
+            const summary = await getEmailSummary(email);
+            return `Email ${index + 1} was sent by ${sender}. ${summary}`;
+          }));
+  
+          const emailSummary = emailSummaries.join('\n\n');
+          aiResponse = `[warmly] Sweetie, I've checked your emails for you. Here's a detailed summary of your ${emailQuery} emails:\n\n${emailSummary}\n\nWould you like me to elaborate on any of these emails?`;
+        }
+        else {
+          aiResponse = `[gently] I'm sorry, darling. I couldn't find any ${emailQuery} emails at the moment. Is there anything else I can help you with?`;
+        }
+  
+        console.log("Updating chat with AI response:", aiResponse);
+        updateChatMessages(userMessage, aiResponse);
+        
+        setTranscript("AI Response: " + aiResponse);
+        setShowTranscript(true);
+  
+        return aiResponse;
+      }
+  
+      let aiMessage = await generateLlamaResponse(constructPrompt(userMessage, getCurrentChat().messages));
+      const formattedAiMessage = formatAiResponse(aiMessage);
+      updateChatMessages(userMessage, formattedAiMessage);
+      aiMessage = aiMessage.replace(/\[.*?\]/g, '')
+        .replace(/•/g, 'Bullet point:')
+        .replace(/\n/g, ' ');
       
       const detectedEmotion = analyzeEmotion(userMessage);
       setEmotionalTone(detectedEmotion);
-
+  
       aiMessage = addEmotionalNuance(aiMessage, detectedEmotion);
       aiMessage = addPersonalTouch(aiMessage);
       aiMessage = addSupportiveLanguage(aiMessage);
       
-      const formattedAiMessage = formatAiResponse(aiMessage);
-      setChats(prevChats => prevChats.map(chat => {
-        if (chat.id === currentChatId) {
-          return { ...chat, messages: [...chat.messages, { type: 'user', content: userMessage }, { type: 'ai', content: formattedAiMessage }] };
-        }
-        return chat;
-      }));
+   
       
+  
       return formattedAiMessage;
     } catch (error) {
-      console.error("Error calling Llama 3.1:", error);
-      return "I'm sorry, my love. I encountered an error. Can we try that again?";
+      console.error("Error in handleAiResponse:", error);
+      return "I'm sorry, I encountered an error. Can we try that again?";
     }
   };
+
+  const handleAppointmentBooking = async (userMessage: string): Promise<string> => {
+    console.log("Detected appointment booking request");
+
+    const dateTimeMatch = userMessage.match(/(\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?))/i);
+    const dateMatch = userMessage.match(/(tomorrow|today|\d{1,2}\/\d{1,2}\/\d{4})/i) || [null, "tomorrow"];
+    const doctorMatch = userMessage.match(/doctor(?:'s name)?\s+(\w+\s*\w*)/i) || [null, ""];
+
+    let time = dateTimeMatch ? dateTimeMatch[1].toLowerCase() : null;
+    console.log("Parsed time:", time);
+
+    if (!time) {
+      return "I'm sorry, I couldn't understand the time for the appointment. Could you please specify the time clearly, like '5:00 AM' or '2:30 PM'?";
+    }
+
+    // Normalize the time format
+    time = time.replace(/\./g, '').replace(/\s/g, '');
+    
+    // Handle cases where the time is recognized without a colon (e.g., "5 am")
+    if (time.match(/^\d{1,2}(?:am|pm)$/i)) {
+      time = time.replace(/^(\d{1,2})/, '$1:00');
+    }
+
+    const date = dateMatch[1].toLowerCase() === 'tomorrow' ? 
+      new Date(new Date().setDate(new Date().getDate() + 1)) : 
+      new Date();
+
+    const [hoursStr, minutesStr] = time.split(':');
+    let hours = parseInt(hoursStr);
+    const minutes = parseInt(minutesStr) || 0;
+    const meridiem = time.includes('pm') ? 'PM' : 'AM';
+    
+    // Adjust hours for PM times
+    if (meridiem === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (meridiem === 'AM' && hours === 12) {
+      hours = 0;
+    }
+
+    // Use the user's local time zone
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    
+    // Create a date in the user's time zone
+    const appointmentDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), hours, minutes);
+
+    const doctorName = doctorMatch[1] || "your doctor";
+    const dateTime = appointmentDate.toISOString();
+
+    console.log(`User requested time: ${time}`);
+    console.log(`Parsed date and time: ${appointmentDate.toLocaleString('en-US', { timeZone: userTimeZone })}`);
+    console.log(`Attempting to book appointment for ${dateTime} (${hours}:${minutes.toString().padStart(2, '0')} ${meridiem}) with ${doctorName} in time zone ${userTimeZone}`);
+    const bookingResponse = await bookAppointment(dateTime, userTimeZone);
+    console.log(`Booking response: ${bookingResponse}`);
+
+    const formattedDate = appointmentDate.toLocaleString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+      timeZone: userTimeZone
+    });
+
+    const aiResponse = `[with a smile in my voice] Sweet friend! I've taken care of booking the appointment for you with ${doctorName} for ${formattedDate}. ${bookingResponse}
+
+Now, let me give you a gentle hug virtually and offer my continued support. [affectionately] It takes a lot of courage to prioritize your health, and I'm so proud of you for doing that! Remember, taking care of yourself is an act of self-love and self-care.
+
+Is there anything else you'd like to know about the appointment or any concerns you'd like to discuss?`;
+    updateChatMessages(userMessage, aiResponse);
+    return aiResponse;
+  };
+
+  const bookAppointment = async (dateTime: string, timeZone: string): Promise<string> => {
+    try {
+      console.log(`Sending request to book appointment for ${dateTime} in time zone ${timeZone}`);
+      const response = await fetch('/api/google/calendar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ accessToken, dateTime, timeZone }),
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to book appointment: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        console.error(`Error response: ${errorText}`);
+        throw new Error(`Failed to book appointment: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log(`Received response from calendar API: ${JSON.stringify(data)}`);
+      return data.message;
+    } catch (error) {
+      console.error('Error booking appointment:', error);
+      return 'Failed to book appointment. Please try again.';
+    }
+  };
+
+  const updateChatMessages = (userMessage: string, aiResponse: string) => {
+    setChats(prevChats => prevChats.map(chat => {
+      if (chat.id === currentChatId) {
+        return { 
+          ...chat, 
+          messages: [
+            ...chat.messages, 
+            { type: 'user', content: userMessage }, 
+            { type: 'ai', content: aiResponse }
+          ] 
+        };
+      }
+      return chat;
+    }));
+  };
+
+  const processQuery = async (query: string) => {
+    if (query.trim()) {
+      setIsCapturingQuery(false);
+      setIsGeneratingResponse(true);
+      console.log("Final user query:", query);
+      const aiResponse = await handleAiResponse(query);
+      console.log("AI Response:", aiResponse);
+      setTranscript("AI Response: " + aiResponse);
+      setShowTranscript(true);
+      if (typeof aiResponse === 'string') {
+        await speakText(aiResponse);
+      } else {
+        console.error("Unexpected AI response type:", typeof aiResponse);
+      }
+      setIsWaitingForWakeWord(true);
+      setUserQuery("");
+      setIsGeneratingResponse(false);
+      setTimeout(() => {
+        setTranscript("Listening for wake word...");
+        startListening();
+      }, 1000);
+    }
+  };
+
+  const readEmail = async (query: string): Promise<string> => {
+    try {
+      console.log("Attempting to read email with query:", query);
+      const response = await fetch('/api/google/gmail', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ accessToken, query }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to read email');
+      }
+  
+      const data = await response.json();
+      console.log("Received email data:", data);
+      return data.message;
+    } catch (error) {
+      console.error('Error reading email:', error);
+      return 'I encountered an error while trying to read your email. Could you please try again?';
+    }
+  };
+
 
   const constructPrompt = (
     userMessage: string,
@@ -340,37 +581,32 @@ const useHealthAssistant = () => {
     return text;
   };
 
+
   const formatAiResponse = (text: string): string => {
-    const escapeHtml = (unsafe: string) => {
-      return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    };
+    // Remove emotional cues in brackets
+    let processedText = text.replace(/\[.*?\]\s*/g, '');
+  
+    // Convert markdown-style formatting to HTML
+    processedText = processedText.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+    processedText = processedText.replace(/\*(.*?)\*/g, "<em>$1</em>");
+    processedText = processedText.replace(/`([^`]+)`/g, "<code>$1</code>");
+  
+    // Convert URLs to clickable links
+    processedText = processedText.replace(
+      /(https?:\/\/[^\s]+)/g,
+      '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+    );
+  
+  // Replace <br> tags with actual line breaks for HTML rendering
+  processedText = processedText.replace(/<br\s*\/?>/gi, '<br>');
 
-    const parts = text.split(/(```[\s\S]*?```)/);
+  // Replace single newlines with <br> tags
+  processedText = processedText.replace(/\n/g, '<br>');
 
-    const processedParts = parts.map((part) => {
-      if (part.startsWith('```') && part.endsWith('```')) {
-        const [, language, code] = part.match(/```(\w*)\n?([\s\S]*?)```/) || [, '', part.slice(3, -3)];
-        const languageClass = language ? `language-${language}` : '';
-        const escapedCode = escapeHtml(code.trim());
-        return `<pre class="bg-gray-100 dark:bg-gray-800 p-2 rounded-md my-2 overflow-x-auto"><code class="${languageClass}">${escapedCode}</code></pre>`;
-      } else {
-        let processedText = escapeHtml(part);
-        processedText = processedText.replace(/`([^`]+)`/g, (match, code) => {
-          return `<code class="bg-gray-100 dark:bg-gray-800 px-1 rounded">${escapeHtml(code)}</code>`;
-        });
-        processedText = processedText.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-        processedText = processedText.replace(/\*(.*?)\*/g, "<em>$1</em>");
-        processedText = processedText.replace(/\n/g, "<br>");
-        return processedText;
-      }
-    });
+  // Sanitize the HTML to prevent XSS attacks
+  processedText = DOMPurify.sanitize(processedText, { ADD_ATTR: ['target'] });
 
-    return processedParts.join('');
+    return processedText;
   };
 
   const stripHtmlAndFormatting = (text: string): string => {
@@ -726,53 +962,55 @@ const useHealthAssistant = () => {
     setIsDarkMode(!isDarkMode);
   };
 
-  const processQuery = async (query: string) => {
-    if (query.trim()) {
-      setIsCapturingQuery(false);
-      setIsGeneratingResponse(true);
-      console.log("Final user query:", query);
-      const aiResponse = await handleAiResponse(query);
-      console.log("AI Response:", aiResponse);
-      setTranscript("AI Response: " + aiResponse);
-      setShowTranscript(true);
-      await speakText(aiResponse);
-      setIsWaitingForWakeWord(true);
-      setUserQuery("");
-      setIsGeneratingResponse(false);
-      setTimeout(() => {
-        setTranscript("Listening for wake word...");
-        startListening();
-      }, 1000);
-    }
-  };
 
+  
   return {
-    chats,
-    currentChatId,
+    messages,
+    setMessages,
+    chatHistory,
+    setChatHistory,
     inputMessage,
     setInputMessage,
-    isListening,
-    isSpeaking,
-    isWaitingForWakeWord,
     transcript,
+    setTranscript,
+    isListening,
+    setIsListening,
+    isWaitingForWakeWord,
+    setIsWaitingForWakeWord,
+    isSpeaking,
+    setIsSpeaking,
+    showTranscript,
+    setShowTranscript,
+    chats,
+    setChats,
+    currentChatId,
+    setCurrentChatId,
     isDarkMode,
     setIsDarkMode,
     isSidebarOpen,
-    voiceIconColor,
+    setIsSidebarOpen,
     voiceIconAnimation,
-    handleSendMessage,
+    setVoiceIconAnimation,
+    isGeneratingResponse,
+    setIsGeneratingResponse,
+    userQuery,
+    setUserQuery,
+    isCapturingQuery,
+    setIsCapturingQuery,
+    emotionalTone,
+    voiceStyle,
+    recognitionError,
     startListening,
+    stopListening,
+    handleSendMessage,
     speakText,
     createNewChat,
     switchChat,
+    getCurrentChat,
     toggleSidebar,
     toggleDarkMode,
-    getCurrentChat,
-    isGeneratingResponse,
-    emotionalTone,
-    voiceStyle,
-    stopListening,
-    recognitionError,
+    bookAppointment,
+    readEmail,
   };
 };
 

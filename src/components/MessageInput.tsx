@@ -17,6 +17,9 @@ interface MessageInputProps {
   speakText: (text: string) => void;
   getCurrentChat: () => Chat;
   isProcessing: boolean;
+  // Update these two props to allow undefined return
+  bookAppointment?: (dateTime: string) => Promise<string | undefined>;
+  readEmail?: (query: string) => Promise<string | undefined>;
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({
@@ -33,6 +36,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
   speakText,
   getCurrentChat,
   isProcessing,
+  // Add these two new props (optional)
+  bookAppointment,
+  readEmail,
 }) => {
   const showListeningAnimation = isListening || (isProcessing && transcript !== '' && !isSpeaking);
 
@@ -73,7 +79,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
           className="flex-grow bg-transparent border-none focus:ring-0 text-lg text-foreground font-sans z-10"
         />
         <Button
-          onClick={() => speakText(getCurrentChat().messages[getCurrentChat().messages.length - 1].content)}
+          onClick={() => {
+            const lastMessage = getCurrentChat().messages[getCurrentChat().messages.length - 1];
+            if (lastMessage && lastMessage.type === 'ai') {
+              speakText(lastMessage.content);
+            }
+          }}
           className={`mr-2 rounded-full p-3 transition-all duration-200 shadow-md hover:shadow-lg z-10 overflow-hidden ${
             isSpeaking ? 'bg-green-500 hover:bg-green-600' : 'bg-primary hover:bg-primary/90'
           }`}
