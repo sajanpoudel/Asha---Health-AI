@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 
 export async function POST(request: Request) {
-  const { accessToken, dateTime } = await request.json();
+  const { accessToken, dateTime, timeZone } = await request.json();
 
-  if (!accessToken || !dateTime) {
+  if (!accessToken || !dateTime || !timeZone) {
     return NextResponse.json({ message: 'Missing required parameters' }, { status: 400 });
   }
 
@@ -21,13 +21,15 @@ export async function POST(request: Request) {
       summary: 'Doctor Appointment',
       start: {
         dateTime: appointmentDate.toISOString(),
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timeZone: timeZone,
       },
       end: {
         dateTime: new Date(appointmentDate.getTime() + 60 * 60 * 1000).toISOString(),
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timeZone: timeZone,
       },
     };
+
+    console.log('Event to be created:', JSON.stringify(event, null, 2));
 
     const response = await calendar.events.insert({
       calendarId: 'primary',
@@ -35,7 +37,19 @@ export async function POST(request: Request) {
     });
 
     console.log('Event created: %s', response.data.htmlLink);
-    return NextResponse.json({ message: `Appointment booked successfully for ${appointmentDate.toLocaleString()}` });
+    const bookedTime = response.data.start?.dateTime
+      ? new Date(response.data.start.dateTime).toLocaleString('en-US', {
+          timeZone: timeZone,
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric',
+          hour12: true,
+        })
+      : 'Unknown time';
+    return NextResponse.json({ message: `Appointment booked successfully for ${bookedTime}` });
   } catch (error) {
     console.error('Error booking appointment:', error);
     return NextResponse.json({ message: 'Failed to book appointment. Please try again.' }, { status: 500 });

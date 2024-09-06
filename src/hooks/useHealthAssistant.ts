@@ -251,30 +251,58 @@ const useHealthAssistant = (accessToken: string) => {
   const handleAppointmentBooking = async (userMessage: string): Promise<string> => {
     console.log("Detected appointment booking request");
 
-    const dateTimeMatch = userMessage.match(/(\d{1,2}:\d{2}\s*(?:am|pm))/i) || [null, "1:00 pm"];
+    const dateTimeMatch = userMessage.match(/(\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?))/i);
     const dateMatch = userMessage.match(/(tomorrow|today|\d{1,2}\/\d{1,2}\/\d{4})/i) || [null, "tomorrow"];
     const doctorMatch = userMessage.match(/doctor(?:'s name)?\s+(\w+\s*\w*)/i) || [null, ""];
 
-    const time = dateTimeMatch[1] || "1:00 pm";
+    let time = dateTimeMatch ? dateTimeMatch[1].toLowerCase() : null;
+    console.log("Parsed time:", time);
+
+    if (!time) {
+      return "I'm sorry, I couldn't understand the time for the appointment. Could you please specify the time clearly, like '5:00 AM' or '2:30 PM'?";
+    }
+
+    // Normalize the time format
+    time = time.replace(/\./g, '').replace(/\s/g, '');
+    
+    // Handle cases where the time is recognized without a colon (e.g., "5 am")
+    if (time.match(/^\d{1,2}(?:am|pm)$/i)) {
+      time = time.replace(/^(\d{1,2})/, '$1:00');
+    }
+
     const date = dateMatch[1].toLowerCase() === 'tomorrow' ? 
       new Date(new Date().setDate(new Date().getDate() + 1)) : 
       new Date();
-    const [hours, minutes] = time.split(':');
-    const meridiem = time.toLowerCase().includes('pm') ? 'PM' : 'AM';
+
+    const [hoursStr, minutesStr] = time.split(':');
+    let hours = parseInt(hoursStr);
+    const minutes = parseInt(minutesStr) || 0;
+    const meridiem = time.includes('pm') ? 'PM' : 'AM';
     
-    date.setHours(
-      meridiem === 'PM' ? (parseInt(hours) % 12) + 12 : parseInt(hours) % 12,
-      parseInt(minutes)
-    );
+    // Adjust hours for PM times
+    if (meridiem === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (meridiem === 'AM' && hours === 12) {
+      hours = 0;
+    }
+
+    // Use the user's local time zone
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    
+    // Create a date in the user's time zone
+    const appointmentDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), hours, minutes);
 
     const doctorName = doctorMatch[1] || "your doctor";
-    const dateTime = date.toISOString();
+    const dateTime = appointmentDate.toISOString();
 
-    console.log(`Attempting to book appointment for ${dateTime} with ${doctorName}`);
-    const bookingResponse = await bookAppointment(dateTime);
+    console.log(`User requested time: ${time}`);
+    console.log(`Parsed date and time: ${appointmentDate.toLocaleString('en-US', { timeZone: userTimeZone })}`);
+    console.log(`UTC date and time: ${dateTime}`);
+    console.log(`Attempting to book appointment for ${dateTime} (${hours}:${minutes.toString().padStart(2, '0')} ${meridiem}) with ${doctorName} in time zone ${userTimeZone}`);
+    const bookingResponse = await bookAppointment(dateTime, userTimeZone);
     console.log(`Booking response: ${bookingResponse}`);
 
-    const formattedDate = date.toLocaleString('en-US', {
+    const formattedDate = appointmentDate.toLocaleString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -282,7 +310,7 @@ const useHealthAssistant = (accessToken: string) => {
       hour: 'numeric',
       minute: 'numeric',
       hour12: true,
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      timeZone: userTimeZone
     });
 
     const aiResponse = `[with a smile in my voice] Sweet friend! I've taken care of booking the appointment for you with ${doctorName} for ${formattedDate}. ${bookingResponse}
@@ -293,6 +321,33 @@ Is there anything else you'd like to know about the appointment or any concerns 
 
     updateChatMessages(userMessage, aiResponse);
     return aiResponse;
+  };
+
+  const bookAppointment = async (dateTime: string, timeZone: string): Promise<string> => {
+    try {
+      console.log(`Sending request to book appointment for ${dateTime} in time zone ${timeZone}`);
+      const response = await fetch('/api/google/calendar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ accessToken, dateTime, timeZone }),
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to book appointment: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        console.error(`Error response: ${errorText}`);
+        throw new Error(`Failed to book appointment: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log(`Received response from calendar API: ${JSON.stringify(data)}`);
+      return data.message;
+    } catch (error) {
+      console.error('Error booking appointment:', error);
+      return 'Failed to book appointment. Please try again.';
+    }
   };
 
   const updateChatMessages = (userMessage: string, aiResponse: string) => {
@@ -334,6 +389,30 @@ Is there anything else you'd like to know about the appointment or any concerns 
       }, 1000);
     }
   };
+
+  const readEmail = async (query: string): Promise<string> => {
+    try {
+      const response = await fetch('/api/google/gmail', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ accessToken, query }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to read email');
+      }
+
+      const data = await response.json();
+      return data.message;
+    } catch (error) {
+      console.error('Error booking appointment:', error);
+      return 'Failed to book appointment. Please try again.';
+    }
+  };
+
+
 
   const constructPrompt = (
     userMessage: string,
@@ -816,55 +895,8 @@ Is there anything else you'd like to know about the appointment or any concerns 
     setIsDarkMode(!isDarkMode);
   };
 
-  const bookAppointment = async (dateTime: string): Promise<string> => {
-    try {
-      console.log(`Sending request to book appointment for ${dateTime}`);
-      const response = await fetch('/api/google/calendar', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ accessToken, dateTime }),
-      });
 
-      if (!response.ok) {
-        console.error(`Failed to book appointment: ${response.status} ${response.statusText}`);
-        const errorText = await response.text();
-        console.error(`Error response: ${errorText}`);
-        throw new Error(`Failed to book appointment: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log(`Received response from calendar API: ${JSON.stringify(data)}`);
-      return data.message;
-    } catch (error) {
-      console.error('Error booking appointment:', error);
-      return 'Failed to book appointment. Please try again.';
-    }
-  };
-
-  const readEmail = async (query: string): Promise<string> => {
-    try {
-      const response = await fetch('/api/google/gmail', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ accessToken, query }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to read email');
-      }
-
-      const data = await response.json();
-      return data.message;
-    } catch (error) {
-      console.error('Error reading email:', error);
-      return 'Failed to read email. Please try again.';
-    }
-  };
-
+  
   return {
     messages,
     setMessages,
