@@ -1,5 +1,3 @@
-import DOMPurify from 'dompurify';
-
 export const formatAiResponse = (text: string): string => {
   // Remove emotional cues in <em> tags
   text = text.replace(/<em>.*?<\/em>/g, '');
@@ -21,10 +19,18 @@ export const formatAiResponse = (text: string): string => {
   // Replace single newlines with <br> tags
   processedText = processedText.replace(/\n/g, '<br>');
 
-  // Sanitize the HTML to prevent XSS attacks
-  processedText = DOMPurify.sanitize(processedText, { ADD_ATTR: ['target'] });
+  // Instead of using DOMPurify, we'll use a simple function to escape HTML
+  return escapeHtml(processedText);
+};
 
-  return processedText;
+// Add this function to escape HTML
+export const escapeHtml = (unsafe: string): string => {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 };
 
 export const stripHtmlAndFormatting = (text: string): string => {

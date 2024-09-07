@@ -1,12 +1,15 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import "@/types";
 import { prompt } from "@/constants/textConstants";
 import { handleAppointmentBooking, bookAppointment } from '../utils/appointmentUtils';
 import { readEmail } from '../utils/emailUtils';
-import { generateLlamaResponse } from '../utils/llamaConfig';
+import { generateLlamaResponse, generateLlamaResponseStream } from '../utils/llamaConfig';
 import { constructPrompt } from '../utils/aiUtils';
 import { analyzeEmotion, addEmotionalNuance, addPersonalTouch, addSupportiveLanguage } from '../utils/emotionUtils';
 import { formatAiResponse, stripHtmlAndFormatting, simplifyText, addNaturalPauses, decodeHtmlEntities } from '../utils/textUtils';
+
+// Create a Web Worker for heavy computations
+const worker = new Worker(new URL('../workers/aiWorker.ts', import.meta.url));
 
 const useHealthAssistant = (accessToken: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -43,6 +46,11 @@ const useHealthAssistant = (accessToken: string) => {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const [recognitionError, setRecognitionError] = useState("");
   const lastProcessedQuery = useRef<string>("");
+
+  const audioQueue = useRef<string[]>([]);
+  const sentenceBuffer = useRef<string[]>([]);
+  const isProcessingAudio = useRef(false);
+  const isGeneratingText = useRef(false);
 
   useEffect(() => {
     const loadVoices = () => {
@@ -237,107 +245,149 @@ const useHealthAssistant = (accessToken: string) => {
     try {
       console.log("Received user message:", userMessage);
 
-      if (userMessage.toLowerCase().includes('book') || 
-          userMessage.toLowerCase().includes('make') || 
-          userMessage.toLowerCase().includes('schedule') && 
-          userMessage.toLowerCase().includes('appointment')) {
-        const appointmentResponse = await handleAppointmentBooking(userMessage, accessToken);
-        updateChatMessages(userMessage, appointmentResponse);
-        return appointmentResponse;
+      if (isAppointmentRequest(userMessage)) {
+        const response = await handleAppointmentBooking(userMessage, accessToken);
+        updateChatMessages(userMessage, response, true);
+        await speakText(response);
+        return response;
       }
 
-      if (userMessage.toLowerCase().includes('email') || 
-          userMessage.toLowerCase().includes('mail') || 
-          userMessage.toLowerCase().includes('inbox')) {
-        console.log("Detected email-related query. Calling readEmail function.");
-        let emailQuery = userMessage.toLowerCase();
-        
-        if (emailQuery.includes('unread') || emailQuery.includes('new')) {
-          emailQuery = 'unread';
-        } else if (emailQuery.includes('important')) {
-          emailQuery = 'important';
-        } else if (emailQuery.includes('sent')) {
-          emailQuery = 'sent';
-        } else if (emailQuery.includes('draft')) {
-          emailQuery = 'draft';
-        } else {
-          emailQuery = 'recent';
-        }
-        
-        let emailData;
-        try {
-          const emailResponse = await readEmail(accessToken, emailQuery);
-          const jsonString = emailResponse.match(/\[.*\]/)?.[0];
-          emailData = jsonString ? JSON.parse(jsonString) : [];
-        } catch (error) {
-          console.error("Failed to parse email response:", error);
-          emailData = [];
-        }
-        
-        const getEmailSummary = async (email: any) => {
-          const emailContent = `
-            Subject: ${email.subject}
-            From: ${email.from}
-            Preview: ${email.snippet}
-          `;
-          const summary = await generateLlamaResponse(`Summarize the following email in 2-3 sentences, highlighting the key points. Do not include phrases like "Here is a summary" or "In summary". Just provide the concise summary:\n\n${emailContent}`);
-          return summary.trim();
-        };
-        
-        let aiResponse = '';
-
-        if (emailData && emailData.length > 0) {
-          const emailSummaries = await Promise.all(emailData.slice(0, 3).map(async (email: any, index: number) => {
-            const sender = email.from.match(/<(.+)>/)?.[1] || email.from;
-            const summary = await getEmailSummary(email);
-            return `Email ${index + 1} was sent by ${sender}. ${summary}`;
-          }));
-
-          const emailSummary = emailSummaries.join('\n\n');
-          aiResponse = `[warmly] Sweetie, I've checked your emails for you. Here's a detailed summary of your ${emailQuery} emails:\n\n${emailSummary}\n\nWould you like me to elaborate on any of these emails?`;
-        }
-        else {
-          aiResponse = `[gently] I'm sorry, darling. I couldn't find any ${emailQuery} emails at the moment. Is there anything else I can help you with?`;
-        }
-
-        console.log("Updating chat with AI response:", aiResponse);
-        updateChatMessages(userMessage, aiResponse);
-        
-        setTranscript("AI Response: " + aiResponse);
-        setShowTranscript(true);
-
-        return aiResponse;
+      if (isEmailRequest(userMessage)) {
+        const response = await handleEmailRequest(userMessage, accessToken);
+        updateChatMessages(userMessage, response, true);
+        await speakText(response);
+        return response;
       }
 
-      let aiMessage = await generateLlamaResponse(constructPrompt(userMessage, getCurrentChat().messages));
-      
-      // Extract emotional cues for speech processing
-      const emotionalCues = aiMessage.match(/<em>.*?<\/em>/g) || [];
-      const emotionTone = emotionalCues.map(cue => cue.replace(/<\/?em>/g, '')).join(' ');
-      setEmotionalTone(emotionTone);
+      // Add user message to chat
+      updateChatMessages(userMessage, '', true);
 
-      // Format AI response for display (this will remove emotional cues)
-      const formattedAiMessage = formatAiResponse(aiMessage);
-      
-      // Update chat messages with the formatted message (without emotional cues)
-      updateChatMessages(userMessage, formattedAiMessage);
+      // Start streaming AI response
+      const stream = await generateLlamaResponseStream(constructPrompt(userMessage, getCurrentChat().messages));
+      let fullResponse = '';
+      let currentSentence = '';
 
-      // Process the original message (with emotional cues) for speech
-      aiMessage = aiMessage.replace(/\[.*?\]/g, '')
-        .replace(/•/g, 'Bullet point:')
-        .replace(/\n/g, ' ');
-      
-      const detectedEmotion = analyzeEmotion(userMessage);
+      isGeneratingText.current = true;
+      for await (const chunk of stream) {
+        fullResponse += chunk;
+        currentSentence += chunk;
+        
+        updateChatMessages('', fullResponse, false);
 
-      aiMessage = addEmotionalNuance(aiMessage, detectedEmotion);
-      aiMessage = addPersonalTouch(aiMessage);
-      aiMessage = addSupportiveLanguage(aiMessage);
+        if (chunk.match(/[.!?]\s*$/)) {
+          await speakText(currentSentence);
+          currentSentence = '';
+        }
+      }
 
-      // Return the formatted message for display
-      return formattedAiMessage;
+      // Speak any remaining text
+      if (currentSentence) {
+        await speakText(currentSentence);
+      }
+
+      isGeneratingText.current = false;
+
+      // Clean and update the final response
+      const cleanedResponse = cleanResponse(fullResponse);
+      updateChatMessages('', cleanedResponse, true);
+
+      return cleanedResponse;
     } catch (error) {
       console.error("Error in handleAiResponse:", error);
       return "I'm sorry, I encountered an error. Can we try that again?";
+    }
+  };
+
+  const cleanResponse = (response: string): string => {
+    // Remove emotional cues and other formatting
+    let cleaned = response.replace(/\[(.*?)\]|<em>.*?<\/em>|\([^)]+\)/g, '');
+    cleaned = stripHtmlAndFormatting(cleaned);
+    cleaned = decodeHtmlEntities(cleaned);
+    // Add any other cleaning steps as needed
+    return cleaned.trim();
+  };
+
+  const updateChatMessages = useCallback((userMessage: string, aiResponse: string, isComplete: boolean = false) => {
+    setChats(prevChats => prevChats.map(chat => {
+      if (chat.id === currentChatId) {
+        const updatedMessages = [...chat.messages];
+        
+        if (userMessage) {
+          // Add user message
+          updatedMessages.push({ type: 'user', content: userMessage });
+        }
+        
+        if (aiResponse) {
+          if (updatedMessages.length > 0 && updatedMessages[updatedMessages.length - 1].type === 'ai') {
+            // Update existing AI message
+            updatedMessages[updatedMessages.length - 1].content = isComplete ? cleanResponse(aiResponse) : aiResponse;
+          } else {
+            // Add new AI message
+            updatedMessages.push({ type: 'ai', content: isComplete ? cleanResponse(aiResponse) : aiResponse });
+          }
+        }
+
+        return { ...chat, messages: updatedMessages };
+      }
+      return chat;
+    }));
+  }, [currentChatId, cleanResponse]);
+
+  const processAiChunk = async (chunk: string) => {
+    return new Promise<string>((resolve) => {
+      worker.onmessage = (event) => {
+        resolve(decodeHtmlEntities(event.data));
+      };
+      worker.postMessage({ type: 'processChunk', chunk });
+    });
+  };
+
+  const isAppointmentRequest = (message: string) => {
+    const keywords = ['book', 'make', 'schedule', 'appointment'];
+    return keywords.some(keyword => message.toLowerCase().includes(keyword));
+  };
+
+  const isEmailRequest = (message: string) => {
+    const keywords = ['email', 'mail', 'inbox'];
+    return keywords.some(keyword => message.toLowerCase().includes(keyword));
+  };
+
+  const handleEmailRequest = async (userMessage: string, accessToken: string) => {
+    console.log("Detected email-related query. Calling readEmail function.");
+    const emailQuery = determineEmailQueryType(userMessage);
+    const emailData = await fetchEmailData(accessToken, emailQuery);
+    return generateEmailResponse(emailData, emailQuery);
+  };
+
+  const determineEmailQueryType = (message: string): string => {
+    if (message.includes('unread') || message.includes('new')) return 'unread';
+    if (message.includes('important')) return 'important';
+    if (message.includes('sent')) return 'sent';
+    if (message.includes('draft')) return 'draft';
+    return 'recent';
+  };
+
+  const fetchEmailData = async (accessToken: string, query: string) => {
+    try {
+      const emailResponse = await readEmail(accessToken, query);
+      const jsonString = emailResponse.match(/\[.*\]/)?.[0];
+      return jsonString ? JSON.parse(jsonString) : [];
+    } catch (error) {
+      console.error("Failed to parse email response:", error);
+      return [];
+    }
+  };
+
+  const generateEmailResponse = (emailData: any[], query: string): string => {
+    if (emailData && emailData.length > 0) {
+      const emailSummaries = emailData.slice(0, 3).map((email: any, index: number) => {
+        const sender = email.from.match(/<(.+)>/)?.[1] || email.from;
+        return `Email ${index + 1} is from ${sender}. Subject: "${email.subject}". Summary: ${email.snippet}`;
+      }).join('\n\n');
+
+      return `[warmly] Sweetie, I've checked your emails for you. Here's a summary of your ${query} emails:\n\n${emailSummaries}\n\nWould you like me to elaborate on any of these emails?`;
+    } else {
+      return `[gently] I'm sorry, darling. I couldn't find any ${query} emails at the moment. Is there anything else I can help you with?`;
     }
   };
 
@@ -363,168 +413,80 @@ const useHealthAssistant = (accessToken: string) => {
     setIsGeneratingResponse(true);
     const aiResponse = await handleAiResponse(trimmedQuery);
     
-    // The chat messages are now updated within handleAiResponse for all cases
-    // So we don't need to update them here
-    
     setIsGeneratingResponse(false);
     
-    await speakText(aiResponse);
-
     setIsWaitingForWakeWord(true);
     setIsCapturingQuery(false);
     setUserQuery("");
   };
 
-  const updateChatMessages = (userMessage: string, aiResponse: string) => {
-    setChats(prevChats => prevChats.map(chat => {
-      if (chat.id === currentChatId) {
-        return {
-          ...chat,
-          messages: [
-            ...chat.messages,
-            { type: 'user', content: userMessage },
-            { type: 'ai', content: aiResponse }
-          ]
-        };
-      }
-      return chat;
-    }));
+  const speakText = async (text: string) => {
+    audioQueue.current.push(text);
+    if (!isProcessingAudio.current) {
+      processAudioQueue();
+    }
   };
 
-  const speakText = async (text: string) => {
-    setIsSpeaking(true);
-    try {
-      const processedText = prepareTextForSpeech(text);
-      console.log("Processed text for speech:", processedText);
-      console.log("Emotional tone:", emotionalTone);
+  const processAudioQueue = async () => {
+    if (audioQueue.current.length === 0) {
+      isProcessingAudio.current = false;
+      return;
+    }
 
+    isProcessingAudio.current = true;
+    const textToSpeak = audioQueue.current.shift() || '';
+
+    try {
+      setIsSpeaking(true);
+      const processedText = prepareTextForSpeech(textToSpeak);
+      console.log("Processed text for speech:", processedText);
       const response = await fetch('/api/text-to-speech', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          text: processedText,
-          emotion: emotionalTone,
-          voiceStyle: voiceStyle
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: processedText, emotion: emotionalTone, voiceStyle }),
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to generate speech: ${response.status}. ${errorText}`);
+        throw new Error(`Failed to generate speech: ${response.status}`);
       }
 
       const audioBlob = await response.blob();
-      console.log("Received audio blob:", audioBlob);
-
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
 
-      audio.onloadedmetadata = () => {
-        console.log("Audio duration:", audio.duration);
-      };
-
-      audio.onplay = () => {
-        console.log("Audio started playing");
-      };
-
       audio.onended = () => {
-        console.log("Audio finished playing");
-        setIsSpeaking(false);
         URL.revokeObjectURL(audioUrl);
-      };
-
-      audio.onerror = (e) => {
-        console.error("Audio error:", e);
+        if (audioQueue.current.length > 0) {
+          processAudioQueue();
+        } else {
+          isProcessingAudio.current = false;
+          setIsSpeaking(false);
+        }
       };
 
       await audio.play();
     } catch (error) {
       console.error('Error in speakText:', error);
+      isProcessingAudio.current = false;
       setIsSpeaking(false);
+      if (audioQueue.current.length > 0) {
+        processAudioQueue();
+      }
     }
   };
 
   const prepareTextForSpeech = (text: string): string => {
-    // Extract emotional cues
-    const emotionalCues = text.match(/\[(.*?)\]|<em>(.*?)<\/em>/g) || [];
-    const emotionTone = emotionalCues
-      .map(cue => cue.replace(/[\[\]<em>\/]/g, '').trim())
-      .join(' ');
-
-    // Remove emotional cues, HTML tags, and parenthetical actions
-    text = text.replace(/\[(.*?)\]|<em>.*?<\/em>|\([^)]+\)/g, '');
-    text = stripHtmlAndFormatting(text);
-    
-    // Decode HTML entities
-    text = decodeHtmlEntities(text);
-    
-    // Remove break tags
-    text = text.replace(/<break time="\d+ms"\/>/g, '');
-    
-    // Format numbers
-    text = text.replace(/\d+/g, (match) => {
-      return formatNumber(parseInt(match));
-    });
-    
-    text = text.replace(/\n+/g, '. ');
-    text = text.replace(/([.!?])\s*/g, '$1 ');
-    text = text.replace(/,\s*/g, ', ');
-    text = text.replace(/[^\w\s.,!?'-]/g, '');
+    // Remove HTML tags, emotional cues, and other formatting
+    text = text.replace(/<[^>]*>|\[.*?\]|\(.*?\)|\*.*?\*/g, '');
+    // Remove SSML tags
+    text = text.replace(/<break[^>]*>/g, '');
+    // Remove extra spaces
     text = text.replace(/\s+/g, ' ').trim();
-
-    // Set the emotional tone for speech
-    setEmotionalTone(emotionTone);
-
+    // Remove punctuation except for sentence-ending punctuation
+    text = text.replace(/[,;:]/g, '');
+    // Remove any remaining special characters
+    text = text.replace(/[^\w\s.!?'-]/g, '');
     return text;
-  };
-
-  const formatNumber = (num: number): string => {
-    const specialNumbers: { [key: number]: string } = {
-      1: 'first',
-      2: 'second',
-      3: 'third',
-      4: 'fourth',
-      5: 'fifth',
-      6: 'sixth',
-      7: 'seventh',
-      8: 'eighth',
-      9: 'ninth',
-      10: 'tenth',
-      11: 'eleventh',
-      12: 'twelfth',
-      13: 'thirteenth',
-      14: 'fourteenth',
-      15: 'fifteenth',
-      20: 'twentieth',
-      30: 'thirtieth',
-      40: 'fortieth',
-      50: 'fiftieth',
-      60: 'sixtieth',
-      70: 'seventieth',
-      80: 'eightieth',
-      90: 'ninetieth',
-      100: 'hundredth',
-      1000: 'thousandth',
-      1000000: 'millionth',
-      1000000000: 'billionth'
-    };
-
-    if (num in specialNumbers) {
-      return specialNumbers[num];
-    }
-
-    if (num < 100) {
-      const tens = Math.floor(num / 10);
-      const ones = num % 10;
-      if (ones === 0) {
-        return specialNumbers[num];
-      }
-      return `${specialNumbers[tens * 10]}-${specialNumbers[ones]}`;
-    }
-
-    return num.toString();
   };
 
   return {

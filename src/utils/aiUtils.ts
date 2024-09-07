@@ -1,6 +1,6 @@
-import { generateLlamaResponse } from './llamaConfig';
+import { generateLlamaResponse, generateLlamaResponseStream } from './llamaConfig';
 
-export { generateLlamaResponse };
+export { generateLlamaResponse, generateLlamaResponseStream };
 
 export const constructPrompt = (
   userMessage: string,
