@@ -253,7 +253,9 @@ const useHealthAssistant = (accessToken: string) => {
       }
 
       if (isEmailRequest(userMessage)) {
-        const response = await handleEmailRequest(userMessage, accessToken);
+        const emailQuery = determineEmailQueryType(userMessage);
+        const emailData = await fetchEmailData(accessToken, emailQuery);
+        const response = await generateDetailedEmailResponse(emailData, emailQuery);
         updateChatMessages(userMessage, response, true);
         await speakText(response);
         return response;
@@ -380,13 +382,6 @@ const useHealthAssistant = (accessToken: string) => {
     return keywords.some(keyword => message.toLowerCase().includes(keyword));
   };
 
-  const handleEmailRequest = async (userMessage: string, accessToken: string) => {
-    console.log("Detected email-related query. Calling readEmail function.");
-    const emailQuery = determineEmailQueryType(userMessage);
-    const emailData = await fetchEmailData(accessToken, emailQuery);
-    return generateEmailResponse(emailData, emailQuery);
-  };
-
   const determineEmailQueryType = (message: string): string => {
     if (message.includes('unread') || message.includes('new')) return 'unread';
     if (message.includes('important')) return 'important';
@@ -406,17 +401,29 @@ const useHealthAssistant = (accessToken: string) => {
     }
   };
 
-  const generateEmailResponse = (emailData: any[], query: string): string => {
+  const generateDetailedEmailResponse = async (emailData: any[], query: string): Promise<string> => {
     if (emailData && emailData.length > 0) {
-      const emailSummaries = emailData.slice(0, 3).map((email: any, index: number) => {
+      const emailSummaries = await Promise.all(emailData.slice(0, 3).map(async (email: any, index: number) => {
         const sender = email.from.match(/<(.+)>/)?.[1] || email.from;
-        return `Email ${index + 1} is from ${sender}. Subject: "${email.subject}". Summary: ${email.snippet}`;
-      }).join('\n\n');
+        const summary = await getEmailSummary(email);
+        return `Email ${index + 1} was sent by ${sender}. ${summary}`;
+      }));
 
-      return `[warmly] Sweetie, I've checked your emails for you. Here's a summary of your ${query} emails:\n\n${emailSummaries}\n\nWould you like me to elaborate on any of these emails?`;
+      const emailSummary = emailSummaries.join('\n\n');
+      return `[warmly] Sweetie, I've checked your emails for you. Here's a detailed summary of your ${query} emails:\n\n${emailSummary}\n\nWould you like me to elaborate on any of these emails?`;
     } else {
       return `[gently] I'm sorry, darling. I couldn't find any ${query} emails at the moment. Is there anything else I can help you with?`;
     }
+  };
+
+  const getEmailSummary = async (email: any) => {
+    const emailContent = `
+      Subject: ${email.subject}
+      From: ${email.from}
+      Preview: ${email.snippet}
+    `;
+    const summary = await generateLlamaResponse(`Summarize the following email in 2-3 sentences, highlighting the key points. Do not include phrases like "Here is a summary" or "In summary". Just provide the concise summary:\n\n${emailContent}`);
+    return summary.trim();
   };
 
   const toggleSidebar = () => {
