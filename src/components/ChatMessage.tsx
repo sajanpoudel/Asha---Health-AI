@@ -10,15 +10,6 @@ interface ChatMessageProps {
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLoading }) => {
-  const renderContent = (content: string) => {
-    return content.split('<br>').map((text, index) => (
-      <React.Fragment key={index}>
-        {text}
-        {index !== content.split('<br>').length - 1 && <br />}
-      </React.Fragment>
-    ));
-  };
-
   return (
     <div className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
       <Card className={`max-w-[70%] ${message.type === 'user' ? 'bg-[#000000] text-[#FFFFFF]' : 'bg-[#FFFFFF] dark:bg-[#1A1A1A]'} rounded-2xl shadow-lg`}>
@@ -32,9 +23,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLoading }) => {
           ) : (
             <p 
               className={`${message.type === 'ai' ? 'text-[#000000] dark:text-[#FFFFFF]' : ''} whitespace-pre-wrap`}
-            >
-              {renderContent(message.content)}
-            </p>
+              dangerouslySetInnerHTML={{ __html: message.content }}
+            />
           )}
         </CardContent>
       </Card>

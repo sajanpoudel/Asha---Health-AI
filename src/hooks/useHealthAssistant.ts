@@ -262,8 +262,15 @@ const useHealthAssistant = (accessToken: string) => {
       // Add user message to chat
       updateChatMessages(userMessage, '', true);
 
+      // Get the current chat history
+      const currentChat = getCurrentChat();
+      const chatHistory = currentChat.messages.slice(-5); // Get last 5 messages
+
+      // Construct the prompt using only the user's message and chat history
+      const prompt = constructPrompt(userMessage, chatHistory);
+
       // Start streaming AI response
-      const stream = await generateLlamaResponseStream(constructPrompt(userMessage, getCurrentChat().messages));
+      const stream = await generateLlamaResponseStream(prompt);
       let fullResponse = '';
       let currentSentence = '';
 
@@ -287,24 +294,14 @@ const useHealthAssistant = (accessToken: string) => {
 
       isGeneratingText.current = false;
 
-      // Clean and update the final response
-      const cleanedResponse = cleanResponse(fullResponse);
-      updateChatMessages('', cleanedResponse, true);
+      // Update the final response without cleaning
+      updateChatMessages('', fullResponse, true);
 
-      return cleanedResponse;
+      return fullResponse;
     } catch (error) {
       console.error("Error in handleAiResponse:", error);
       return "I'm sorry, I encountered an error. Can we try that again?";
     }
-  };
-
-  const cleanResponse = (response: string): string => {
-    // Remove emotional cues and other formatting
-    let cleaned = response.replace(/\[(.*?)\]|<em>.*?<\/em>|\([^)]+\)/g, '');
-    cleaned = stripHtmlAndFormatting(cleaned);
-    cleaned = decodeHtmlEntities(cleaned);
-    // Add any other cleaning steps as needed
-    return cleaned.trim();
   };
 
   const updateChatMessages = useCallback((userMessage: string, aiResponse: string, isComplete: boolean = false) => {
@@ -320,10 +317,10 @@ const useHealthAssistant = (accessToken: string) => {
         if (aiResponse) {
           if (updatedMessages.length > 0 && updatedMessages[updatedMessages.length - 1].type === 'ai') {
             // Update existing AI message
-            updatedMessages[updatedMessages.length - 1].content = isComplete ? cleanResponse(aiResponse) : aiResponse;
+            updatedMessages[updatedMessages.length - 1].content = formatAiResponseForDisplay(aiResponse);
           } else {
             // Add new AI message
-            updatedMessages.push({ type: 'ai', content: isComplete ? cleanResponse(aiResponse) : aiResponse });
+            updatedMessages.push({ type: 'ai', content: formatAiResponseForDisplay(aiResponse) });
           }
         }
 
@@ -331,7 +328,28 @@ const useHealthAssistant = (accessToken: string) => {
       }
       return chat;
     }));
-  }, [currentChatId, cleanResponse]);
+  }, [currentChatId]);
+
+  const formatAiResponseForDisplay = (text: string): string => {
+    // Preserve line breaks
+    text = text.replace(/\n/g, '<br>');
+    
+    // Convert markdown-style formatting to HTML
+    text = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+    text = text.replace(/\*(.*?)\*/g, "<em>$1</em>");
+    text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
+
+    // Convert URLs to clickable links
+    text = text.replace(
+      /(https?:\/\/[^\s]+)/g,
+      '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+    );
+
+    // Preserve emotional cues in square brackets
+    text = text.replace(/\[(.*?)\]/g, '<span class="emotional-cue">[$1]</span>');
+
+    return text;
+  };
 
   const processAiChunk = async (chunk: string) => {
     return new Promise<string>((resolve) => {
