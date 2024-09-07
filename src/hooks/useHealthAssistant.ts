@@ -47,7 +47,7 @@ const useHealthAssistant = (accessToken: string) => {
   const [recognitionError, setRecognitionError] = useState("");
   const lastProcessedQuery = useRef<string>("");
 
-  const audioQueue = useRef<string[]>([]);
+  const audioQueue = useRef<{ text: string; emotion: string }[]>([]);
   const sentenceBuffer = useRef<string[]>([]);
   const isProcessingAudio = useRef(false);
   const isGeneratingText = useRef(false);
@@ -282,22 +282,32 @@ const useHealthAssistant = (accessToken: string) => {
         updateChatMessages('', fullResponse, false);
 
         if (chunk.match(/[.!?]\s*$/)) {
-          await speakText(currentSentence);
+          const emotion = analyzeEmotion(currentSentence);
+          const processedSentence = addEmotionalNuance(currentSentence, emotion);
+          await speakText(processedSentence, emotion);
           currentSentence = '';
         }
       }
 
       // Speak any remaining text
       if (currentSentence) {
-        await speakText(currentSentence);
+        const emotion = analyzeEmotion(currentSentence);
+        const processedSentence = addEmotionalNuance(currentSentence, emotion);
+        await speakText(processedSentence, emotion);
       }
 
       isGeneratingText.current = false;
 
-      // Update the final response without cleaning
-      updateChatMessages('', fullResponse, true);
+      // Process the full response for display
+      const emotion = analyzeEmotion(fullResponse);
+      let processedResponse = addEmotionalNuance(fullResponse, emotion);
+      processedResponse = addPersonalTouch(processedResponse);
+      processedResponse = addSupportiveLanguage(processedResponse);
 
-      return fullResponse;
+      // Update the final response
+      updateChatMessages('', processedResponse, true);
+
+      return processedResponse;
     } catch (error) {
       console.error("Error in handleAiResponse:", error);
       return "I'm sorry, I encountered an error. Can we try that again?";
@@ -438,8 +448,8 @@ const useHealthAssistant = (accessToken: string) => {
     setUserQuery("");
   };
 
-  const speakText = async (text: string) => {
-    audioQueue.current.push(text);
+  const speakText = async (text: string, emotion: string = 'warm') => {
+    audioQueue.current.push({ text, emotion });
     if (!isProcessingAudio.current) {
       processAudioQueue();
     }
@@ -452,7 +462,7 @@ const useHealthAssistant = (accessToken: string) => {
     }
 
     isProcessingAudio.current = true;
-    const textToSpeak = audioQueue.current.shift() || '';
+    const { text: textToSpeak, emotion } = audioQueue.current.shift() || { text: '', emotion: 'warm' };
 
     try {
       setIsSpeaking(true);
@@ -461,7 +471,7 @@ const useHealthAssistant = (accessToken: string) => {
       const response = await fetch('/api/text-to-speech', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: processedText, emotion: emotionalTone, voiceStyle }),
+        body: JSON.stringify({ text: processedText, emotion, voiceStyle }),
       });
 
       if (!response.ok) {
@@ -496,14 +506,20 @@ const useHealthAssistant = (accessToken: string) => {
   const prepareTextForSpeech = (text: string): string => {
     // Remove HTML tags, emotional cues, and other formatting
     text = text.replace(/<[^>]*>|\[.*?\]|\(.*?\)|\*.*?\*/g, '');
+    
     // Remove SSML tags
     text = text.replace(/<break[^>]*>/g, '');
+    
+    // Replace punctuation with natural pauses
+    text = text.replace(/([.!?])\s*/g, '$1 ');
+    text = text.replace(/,\s*/g, ', ');
+    
+    // Remove any remaining special characters
+    text = text.replace(/[^\w\s.!?',;:-]/g, '');
+    
     // Remove extra spaces
     text = text.replace(/\s+/g, ' ').trim();
-    // Remove punctuation except for sentence-ending punctuation
-    text = text.replace(/[,;:]/g, '');
-    // Remove any remaining special characters
-    text = text.replace(/[^\w\s.!?'-]/g, '');
+    
     return text;
   };
 

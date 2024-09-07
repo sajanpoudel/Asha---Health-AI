@@ -28,8 +28,11 @@ export async function POST(request: Request) {
   // Get emotion and speaker settings
   const emotionSettings = emotionMap[emotion] || '--emotion Neutral --speaker_id 0';
 
+  // Add speed parameter (0.8 for slightly slower speech)
+  const speedSetting = '--speed 0.8';
+
   // Construct the Piper command
-  const piperCommand = `echo "${text}" | ${process.env.PIPER_PATH} --model ${process.env.PIPER_MODEL_PATH} ${emotionSettings} --output_file ${outputPath}`;
+  const piperCommand = `echo "${text}" | ${process.env.PIPER_PATH} --model ${process.env.PIPER_MODEL_PATH} ${emotionSettings} ${speedSetting} --sentence-silence 0.2 --output_file ${outputPath}`;
 
   console.log("Piper command:", piperCommand);
 
@@ -64,6 +67,7 @@ export async function POST(request: Request) {
     return response;
   } catch (error) {
     console.error("Error in Piper TTS:", error);
-    return NextResponse.json({ error: 'Failed to generate speech', details: error.message }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: 'Failed to generate speech', details: errorMessage }, { status: 500 });
   }
 }
