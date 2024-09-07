@@ -507,18 +507,15 @@ const useHealthAssistant = (accessToken: string) => {
     // Remove HTML tags, emotional cues, and other formatting
     text = text.replace(/<[^>]*>|\[.*?\]|\(.*?\)|\*.*?\*/g, '');
     
-    // Remove SSML tags
-    text = text.replace(/<break[^>]*>/g, '');
+    // Remove extra spaces
+    text = text.replace(/\s+/g, ' ').trim();
     
-    // Replace punctuation with natural pauses
+    // Add pauses for punctuation without using custom markers
     text = text.replace(/([.!?])\s*/g, '$1 ');
     text = text.replace(/,\s*/g, ', ');
     
     // Remove any remaining special characters
     text = text.replace(/[^\w\s.!?',;:-]/g, '');
-    
-    // Remove extra spaces
-    text = text.replace(/\s+/g, ' ').trim();
     
     return text;
   };

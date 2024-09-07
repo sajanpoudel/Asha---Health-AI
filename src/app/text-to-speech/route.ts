@@ -28,11 +28,17 @@ export async function POST(request: Request) {
   // Get emotion and speaker settings
   const emotionSettings = emotionMap[emotion] || '--emotion Neutral --speaker_id 0';
 
-  // Add speed parameter (0.8 for slightly slower speech)
-  const speedSetting = '--speed 0.8';
+  // Add speed parameter (0.95 for slightly slower speech)
+  const speedSetting = '--speed 0.95';
+
+  // Add sentence-silence for natural pauses
+  const silenceSetting = '--sentence-silence 0.1';
+
+  // Escape special characters
+  let processedText = text.replace(/["\\]/g, '\\$&');
 
   // Construct the Piper command
-  const piperCommand = `echo "${text}" | ${process.env.PIPER_PATH} --model ${process.env.PIPER_MODEL_PATH} ${emotionSettings} ${speedSetting} --sentence-silence 0.2 --output_file ${outputPath}`;
+  const piperCommand = `echo "${processedText}" | ${process.env.PIPER_PATH} --model ${process.env.PIPER_MODEL_PATH} ${emotionSettings} ${speedSetting} ${silenceSetting} --output_file ${outputPath}`;
 
   console.log("Piper command:", piperCommand);
 
