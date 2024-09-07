@@ -5,11 +5,11 @@ import { createOAuth2Client } from '@/utils/googleAuth';
 export async function POST(request: Request) {
   try {
     const { accessToken, dateTime, timeZone } = await request.json();
-    console.log('Received request:', { 
-      accessToken: accessToken ? 'present' : 'missing', 
-      dateTime, 
+    console.log('Received request:', {
+      accessToken: accessToken ? 'present' : 'missing',
+      dateTime,
       timeZone,
-      accessTokenLength: accessToken ? accessToken.length : 0
+      accessTokenLength: accessToken ? accessToken.length : 0,
     });
     if (!accessToken || !dateTime || !timeZone) {
       return NextResponse.json({ message: 'Missing required parameters' }, { status: 400 });
