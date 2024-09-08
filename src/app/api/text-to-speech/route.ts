@@ -8,7 +8,9 @@ import os from 'os';
 const execAsync = promisify(exec);
 
 const PIPER_PATH = process.env.PIPER_PATH || path.join(process.cwd(), 'piper', 'build', 'piper');
-const MODEL_PATH = process.env.PIPER_MODEL_PATH || path.join(process.cwd(), 'piper', 'models', 'en_US-libritts-high.onnx');
+const MODEL_PATH =
+  process.env.PIPER_MODEL_PATH ||
+  path.join(process.cwd(), 'piper', 'models', 'en_US-libritts-high.onnx');
 
 export async function POST(request: Request) {
   const { text } = await request.json();
@@ -30,8 +32,8 @@ export async function POST(request: Request) {
       status: 200,
       headers: {
         'Content-Type': 'audio/wav',
-        'Content-Disposition': 'attachment; filename="speech.wav"'
-      }
+        'Content-Disposition': 'attachment; filename="speech.wav"',
+      },
     });
   } catch (error) {
     console.error('Error in text to speech:', error);
