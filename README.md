@@ -130,6 +130,41 @@ Before you begin, ensure you have met the following requirements:
    - "Book a doctor appointment for tomorrow at 2 PM"
    - "Schedule a checkup next Monday at 10 AM"
 
+## Multi-threading Implementation
+The application uses multi-threading to process text and audio in parallel:
+
+1. Text Processing Thread:
+   - Handles AI response generation
+   - Processes user input
+   - Manages chat history
+
+2. Audio Processing Thread:
+   - Manages speech recognition
+   - Handles text-to-speech conversion
+   - Controls audio playback
+
+This parallel processing allows for smoother user interactions and faster response times.
+
+## Voice Model Training
+Custom voice models can be trained for more personalized text-to-speech output:
+
+1. Data Collection:
+   - Use `audio_download_create_wav_files.py` to download and process audio from YouTube.
+   - The script converts audio to WAV format and splits it into 18-second segments.
+
+2. Data Preprocessing:
+   - `process_wav_files_to_remove_wav_errors.py` validates WAV files and removes errors.
+   - Ensures all files are mono, 16-bit, and either 16000 or 22050 Hz.
+
+3. Transcription:
+   - `transcript.py` uses the Whisper model to transcribe audio files.
+   - Generates a `transcript.txt` file with mappings of audio files to transcribed text.
+   - This file is used to train the voice model. https://colab.research.google.com/github/rmcpantoja/piper/blob/master/notebooks/piper_multilingual_training_notebook.ipynb 
+
+4. Model Training:
+   - Use the processed WAV files and transcript to train a custom voice model.
+   - Adjust training parameters as needed for your specific use case.
+
 ## Contributing
 
 Contributions to the Health Assistant AI project are welcome. Please follow these steps:
