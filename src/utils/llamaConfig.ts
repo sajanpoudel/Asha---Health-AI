@@ -2,6 +2,7 @@ import { Ollama } from "@langchain/ollama";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { RunnableSequence } from "@langchain/core/runnables";
+import { prompt } from "@/constants/textConstants";
 
 export const LLAMA_MODEL = "llama3.1";
 
