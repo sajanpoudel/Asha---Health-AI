@@ -34,4 +34,11 @@ describe('Sidebar', () => {
     fireEvent.click(close);
     expect(props.toggleSidebar).toHaveBeenCalledTimes(1);
   });
+
+  it('toggles dark mode', () => {
+    const props = baseProps();
+    const { container } = render(<Sidebar {...props} />);
+    fireEvent.click(container.querySelector('svg.lucide-moon')!.closest('button')!);
+    expect(props.setIsDarkMode).toHaveBeenCalledWith(true);
+  });
 });
