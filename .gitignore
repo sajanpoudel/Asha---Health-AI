@@ -32,12 +32,12 @@ yarn-error.log*
 .env*.local
 
 # Environment variables
+myenv/
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-myenv/
 
 # vercel
 .vercel
@@ -45,3 +45,4 @@ myenv/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+myenv/
