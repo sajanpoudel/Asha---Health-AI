@@ -1,53 +1,40 @@
+import { Ollama } from "@langchain/ollama";
+import { PromptTemplate } from "@langchain/core/prompts";
+import { StringOutputParser } from "@langchain/core/output_parsers";
+import { RunnableSequence } from "@langchain/core/runnables";
+
 export const LLAMA_MODEL = "llama3.1";
-export const LLAMA_API_URL = "http://localhost:11434/api/generate";
+
+const ollama = new Ollama({
+  baseUrl: "http://localhost:11434",
+  model: LLAMA_MODEL,
+});
+
+const promptTemplate = PromptTemplate.fromTemplate(
+  "You are a helpful AI assistant. {prompt}"
+);
 
 export const generateLlamaResponse = async (prompt: string): Promise<string> => {
-  const response = await fetch(LLAMA_API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: LLAMA_MODEL,
-      prompt,
-      stream: false,
-    }),
-  });
+  const chain = RunnableSequence.from([
+    promptTemplate,
+    ollama,
+    new StringOutputParser(),
+  ]);
 
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  const data = await response.json();
-  return data.response.trim();
+  const response = await chain.invoke({ prompt });
+  return response.trim();
 };
 
 export const generateLlamaResponseStream = async function* (prompt: string) {
-  const response = await fetch(LLAMA_API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: LLAMA_MODEL,
-      prompt,
-      stream: true,
-    }),
-  });
+  const chain = RunnableSequence.from([
+    promptTemplate,
+    ollama,
+    new StringOutputParser(),
+  ]);
 
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
+  const stream = await chain.stream({ prompt });
 
-  const reader = response.body!.getReader();
-  const decoder = new TextDecoder();
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    const chunk = decoder.decode(value);
-    const lines = chunk.split('\n');
-    for (const line of lines) {
-      if (line.trim() !== '') {
-        const parsedLine = JSON.parse(line);
-        yield parsedLine.response;
-      }
-    }
+  for await (const chunk of stream) {
+    yield chunk;
   }
 };

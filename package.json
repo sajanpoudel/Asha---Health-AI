@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@langchain/community": "^0.2.32",
+    "@langchain/ollama": "^0.0.4",
     "@next/font": "^14.2.8",
     "@radix-ui/react-checkbox": "^1.1.1",
     "@radix-ui/react-scroll-area": "^1.1.0",
@@ -24,6 +26,7 @@
     "framer-motion": "^11.5.2",
     "googleapis": "^144.0.0",
     "jwt-decode": "^4.0.0",
+    "langchain": "^0.2.18",
     "lucide-react": "^0.263.1",
     "next": "14.2.4",
     "openai": "^4.52.4",

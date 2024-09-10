@@ -245,6 +245,8 @@ const useHealthAssistant = (accessToken: string) => {
     try {
       console.log("Received user message:", userMessage);
 
+
+
       if (isAppointmentRequest(userMessage)) {
         const response = await handleAppointmentBooking(userMessage, accessToken);
         updateChatMessages(userMessage, response, true);
@@ -263,6 +265,7 @@ const useHealthAssistant = (accessToken: string) => {
 
       // Add user message to chat
       updateChatMessages(userMessage, '', true);
+      setTimeout(startListening, 1000);
 
       // Get the current chat history
       const currentChat = getCurrentChat();
@@ -288,6 +291,8 @@ const useHealthAssistant = (accessToken: string) => {
           const processedSentence = addEmotionalNuance(currentSentence, emotion);
           await speakText(processedSentence, emotion);
           currentSentence = '';
+          stopListening();
+
         }
       }
 
@@ -312,6 +317,8 @@ const useHealthAssistant = (accessToken: string) => {
       return processedResponse;
     } catch (error) {
       console.error("Error in handleAiResponse:", error);
+      setTimeout(startListening, 1000);
+
       return "I'm sorry, I encountered an error. Can we try that again?";
     }
   };
@@ -456,6 +463,8 @@ const useHealthAssistant = (accessToken: string) => {
   };
 
   const speakText = async (text: string, emotion: string = 'warm') => {
+    stopListening();
+
     audioQueue.current.push({ text, emotion });
     if (!isProcessingAudio.current) {
       processAudioQueue();
@@ -496,6 +505,8 @@ const useHealthAssistant = (accessToken: string) => {
         } else {
           isProcessingAudio.current = false;
           setIsSpeaking(false);
+          setTimeout(startListening, 1000);
+
         }
       };
 
