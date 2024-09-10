@@ -45,4 +45,3 @@ myenv/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-myenv/
