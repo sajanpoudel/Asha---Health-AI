@@ -26,4 +26,12 @@ describe('Sidebar', () => {
     render(<Sidebar {...baseProps()} />);
     expect(screen.getAllByText('New Chat').length).toBeGreaterThanOrEqual(2);
   });
+
+  it('closes through the close button', () => {
+    const props = baseProps();
+    const { container } = render(<Sidebar {...props} />);
+    const close = container.querySelector('svg.lucide-x')!.closest('button')!;
+    fireEvent.click(close);
+    expect(props.toggleSidebar).toHaveBeenCalledTimes(1);
+  });
 });
