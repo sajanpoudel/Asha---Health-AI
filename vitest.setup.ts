@@ -1,5 +1,9 @@
 import '@testing-library/jest-dom/vitest';
-import { vi } from 'vitest';
+import { cleanup } from '@testing-library/react';
+import { afterEach, vi } from 'vitest';
+
+// Unmount rendered components between tests
+afterEach(cleanup);
 
 // jsdom does not implement these browser APIs
 Element.prototype.scrollIntoView = vi.fn();
