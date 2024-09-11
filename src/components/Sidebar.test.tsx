@@ -41,4 +41,10 @@ describe('Sidebar', () => {
     fireEvent.click(container.querySelector('svg.lucide-moon')!.closest('button')!);
     expect(props.setIsDarkMode).toHaveBeenCalledWith(true);
   });
+
+  it('shows a sun icon in dark mode', () => {
+    const { container } = render(<Sidebar {...baseProps()} isDarkMode />);
+    expect(container.querySelector('svg.lucide-sun')).not.toBeNull();
+    expect(container.querySelector('svg.lucide-moon')).toBeNull();
+  });
 });
