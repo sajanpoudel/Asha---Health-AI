@@ -13,13 +13,13 @@ const emotionMap: { [key: string]: string } = {
   anxious: '--emotion Fearful --speaker_id 3',
   angry: '--emotion Angry --speaker_id 4',
   playful: '--emotion Happy --speaker_id 5',
-  warm: '--emotion Neutral --speaker_id 6'
+  warm: '--emotion Neutral --speaker_id 6',
 };
 
 export async function POST(request: Request) {
   const { text, emotion, voiceStyle } = await request.json();
 
-  console.log("Received request:", { text, emotion, voiceStyle });
+  console.log('Received request:', { text, emotion, voiceStyle });
 
   // Generate a unique filename
   const filename = `speech_${Date.now()}.wav`;
@@ -40,30 +40,30 @@ export async function POST(request: Request) {
   // Construct the Piper command
   const piperCommand = `echo "${processedText}" | ${process.env.PIPER_PATH} --model ${process.env.PIPER_MODEL_PATH} ${emotionSettings} ${speedSetting} ${silenceSetting} --output_file ${outputPath}`;
 
-  console.log("Piper command:", piperCommand);
+  console.log('Piper command:', piperCommand);
 
   try {
     // Execute Piper
     const { stdout, stderr } = await execPromise(piperCommand);
-    console.log("Piper stdout:", stdout);
-    console.log("Piper stderr:", stderr);
+    console.log('Piper stdout:', stdout);
+    console.log('Piper stderr:', stderr);
 
     // Check if the file was created
     if (!fs.existsSync(outputPath)) {
-      throw new Error("Output file was not created");
+      throw new Error('Output file was not created');
     }
 
     // Read the generated audio file
     const audioBuffer = fs.readFileSync(outputPath);
 
-    console.log("Audio file size:", audioBuffer.length);
+    console.log('Audio file size:', audioBuffer.length);
 
     // Create the response
     const response = new NextResponse(audioBuffer, {
       status: 200,
       headers: {
         'Content-Type': 'audio/wav',
-        'Content-Disposition': `attachment; filename=${filename}`
+        'Content-Disposition': `attachment; filename=${filename}`,
       },
     });
 
@@ -72,8 +72,11 @@ export async function POST(request: Request) {
 
     return response;
   } catch (error) {
-    console.error("Error in Piper TTS:", error);
+    console.error('Error in Piper TTS:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: 'Failed to generate speech', details: errorMessage }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to generate speech', details: errorMessage },
+      { status: 500 }
+    );
   }
 }
