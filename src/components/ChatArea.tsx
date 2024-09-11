@@ -1,8 +1,8 @@
 import React, { useRef, useEffect } from 'react';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import ChatMessage from './ChatMessage';
 import '@/types';
-import { motion } from "framer-motion";
+import { motion } from 'framer-motion';
 
 interface ChatAreaProps {
   getCurrentChat: () => Chat;
@@ -13,7 +13,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ getCurrentChat, isGeneratingRespons
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [getCurrentChat().messages]);
 
   const currentChat: Chat = getCurrentChat();
