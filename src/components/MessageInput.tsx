@@ -1,7 +1,7 @@
 import React from 'react';
 import { Mic, Volume2, Send, Loader2 } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface MessageInputProps {
   inputMessage: string;
@@ -64,17 +64,23 @@ const MessageInput: React.FC<MessageInputProps> = ({
             isListening ? 'bg-blue-500 hover:bg-blue-600' : 'bg-primary hover:bg-primary/90'
           } transition-all duration-200 shadow-md hover:shadow-lg z-10`}
         >
-          <Mic className={`w-6 h-6 ${isListening ? 'text-white' : 'text-primary-foreground'} ${isListening ? 'animate-pulse' : ''}`} />
+          <Mic
+            className={`w-6 h-6 ${isListening ? 'text-white' : 'text-primary-foreground'} ${isListening ? 'animate-pulse' : ''}`}
+          />
         </Button>
         <Input
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           placeholder={
-            isWaitingForWakeWord ? 'Say "Hey Asha" to start' :
-            isListening ? 'Listening...' :
-            isSpeaking ? 'Speaking...' :
-            transcript ? transcript :
-            'Type your message...'
+            isWaitingForWakeWord
+              ? 'Say "Hey Asha" to start'
+              : isListening
+                ? 'Listening...'
+                : isSpeaking
+                  ? 'Speaking...'
+                  : transcript
+                    ? transcript
+                    : 'Type your message...'
           }
           className="flex-grow bg-transparent border-none focus:ring-0 text-lg text-foreground font-sans z-10"
         />
