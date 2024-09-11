@@ -47,4 +47,9 @@ describe('Sidebar', () => {
     expect(container.querySelector('svg.lucide-sun')).not.toBeNull();
     expect(container.querySelector('svg.lucide-moon')).toBeNull();
   });
+
+  it('renders nothing when closed', () => {
+    render(<Sidebar {...baseProps()} isSidebarOpen={false} />);
+    expect(screen.queryByText('ashaHealth')).not.toBeInTheDocument();
+  });
 });
