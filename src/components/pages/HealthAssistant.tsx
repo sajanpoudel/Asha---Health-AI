@@ -1,9 +1,9 @@
-'use client'
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db, auth } from '@/utils/firebase';
 import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'firebase/auth';
@@ -24,19 +24,19 @@ const LoginComponent: React.FC = () => {
       const provider = new GoogleAuthProvider();
       provider.addScope('https://www.googleapis.com/auth/calendar');
       provider.addScope('https://www.googleapis.com/auth/gmail.readonly');
-      
+
       const result = await signInWithPopup(auth, provider);
       const credential = GoogleAuthProvider.credentialFromResult(result);
       const token = credential?.accessToken;
       console.log('Access Token:', token);
-      
+
       if (result.user && token) {
         const userData: PersonalData = {
           name: result.user.displayName || '',
           email: result.user.email || '',
           picture: result.user.photoURL || '',
         };
-        
+
         await setDoc(doc(db, 'users', result.user.uid), userData);
         localStorage.setItem('accessToken', token);
         localStorage.setItem('personalData', JSON.stringify(userData));
@@ -53,8 +53,12 @@ const LoginComponent: React.FC = () => {
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-blue-100 to-blue-200">
       <Card className="w-full max-w-md">
         <CardContent className="p-6">
-          <h2 className="text-2xl font-bold text-center mb-6">Welcome to Your AI Health Assistant</h2>
-          <Button onClick={login} className="w-full">Sign in with Google</Button>
+          <h2 className="text-2xl font-bold text-center mb-6">
+            Welcome to Your AI Health Assistant
+          </h2>
+          <Button onClick={login} className="w-full">
+            Sign in with Google
+          </Button>
           {error && <p className="text-red-500 mt-4">{error}</p>}
         </CardContent>
       </Card>
@@ -75,7 +79,7 @@ const HealthAssistant: React.FC = () => {
       if (user) {
         const storedAccessToken = localStorage.getItem('accessToken');
         const storedPersonalData = localStorage.getItem('personalData');
-        
+
         if (storedAccessToken && storedPersonalData) {
           setIsAuthenticated(true);
           setAccessToken(storedAccessToken);
