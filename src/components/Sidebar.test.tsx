@@ -52,4 +52,9 @@ describe('Sidebar', () => {
     render(<Sidebar {...baseProps()} isSidebarOpen={false} />);
     expect(screen.queryByText('ashaHealth')).not.toBeInTheDocument();
   });
+
+  it('titles a chat with the start of its first message', () => {
+    render(<Sidebar {...baseProps()} />);
+    expect(screen.getByText('My head hurts a lot ...')).toBeInTheDocument();
+  });
 });
