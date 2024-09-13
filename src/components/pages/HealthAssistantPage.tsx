@@ -2,13 +2,13 @@
 
 import React from 'react';
 import { Menu } from 'lucide-react';
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import useHealthAssistant from '@/hooks/useHealthAssistant';
 import Sidebar from '@/components/Sidebar';
 import ChatArea from '../ChatArea';
 import MessageInput from '../MessageInput';
 import '@/types';
-import { motion } from "framer-motion";
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 
 interface HealthAssistantPageProps {
@@ -43,11 +43,13 @@ const HealthAssistantPage: React.FC<HealthAssistantPageProps> = ({ personalData 
     startListening,
     speakText,
     recognitionError,
-    accessToken
+    accessToken,
   } = useHealthAssistant();
 
   return (
-    <div className={`flex h-screen ${isDarkMode ? 'dark' : ''} bg-background dark:bg-background font-sans relative overflow-hidden`}>
+    <div
+      className={`flex h-screen ${isDarkMode ? 'dark' : ''} bg-background dark:bg-background font-sans relative overflow-hidden`}
+    >
       {/* Enhanced Glowing effect */}
       {isListening && (
         <div className="absolute inset-0 z-0 pointer-events-none">
@@ -84,24 +86,23 @@ const HealthAssistantPage: React.FC<HealthAssistantPageProps> = ({ personalData 
         toggleSidebar={toggleSidebar}
       />
 
-      <motion.div 
+      <motion.div
         className={`flex-1 flex flex-col ${isSidebarOpen ? 'ml-80' : 'ml-0'} transition-all duration-300 relative z-10`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
         <nav className="p-4 bg-primary text-primary-foreground">
-      <Link href="/profile" passHref>
-        <Button variant="outline" className="mr-2">Profile</Button>
-      </Link>
-      <Link href="/questionnaire" passHref>
-        <Button variant="outline">Health Questionnaire</Button>
-      </Link>
-    </nav>
-        <ChatArea
-          getCurrentChat={getCurrentChat}
-          isGeneratingResponse={isGeneratingResponse}
-        />
+          <Link href="/profile" passHref>
+            <Button variant="outline" className="mr-2">
+              Profile
+            </Button>
+          </Link>
+          <Link href="/questionnaire" passHref>
+            <Button variant="outline">Health Questionnaire</Button>
+          </Link>
+        </nav>
+        <ChatArea getCurrentChat={getCurrentChat} isGeneratingResponse={isGeneratingResponse} />
         <MessageInput
           inputMessage={inputMessage}
           setInputMessage={setInputMessage}
