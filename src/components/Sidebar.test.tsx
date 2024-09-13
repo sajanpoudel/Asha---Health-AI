@@ -57,4 +57,11 @@ describe('Sidebar', () => {
     render(<Sidebar {...baseProps()} />);
     expect(screen.getByText('My head hurts a lot ...')).toBeInTheDocument();
   });
+
+  it('switches to the chat that was clicked', () => {
+    const props = baseProps();
+    render(<Sidebar {...props} />);
+    fireEvent.click(screen.getByText('My head hurts a lot ...'));
+    expect(props.switchChat).toHaveBeenCalledWith('a');
+  });
 });
