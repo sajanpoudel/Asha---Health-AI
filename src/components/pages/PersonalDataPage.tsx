@@ -1,7 +1,7 @@
 import React, { useState, ChangeEvent } from 'react';
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface PersonalDataPageProps {
   onComplete: (data: PersonalData) => void;
@@ -19,14 +19,14 @@ const PersonalDataPage: React.FC<PersonalDataPageProps> = ({ onComplete }) => {
     name: '',
     age: '',
     bloodGroup: '',
-    medicalHistory: ''
+    medicalHistory: '',
   });
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setPersonalData(prevData => ({
+    setPersonalData((prevData) => ({
       ...prevData,
-      [name]: value
+      [name]: value,
     }));
   };
 
