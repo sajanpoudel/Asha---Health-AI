@@ -2,16 +2,21 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/utils/firebase';
-import {auth} from '@/utils/firebase';
+import { auth } from '@/utils/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-
 
 interface QuestionnaireData {
   bloodGroup: string;
@@ -40,15 +45,14 @@ const HealthQuestionnairePage: React.FC = () => {
 
     return () => unsubscribe();
   }, [router]);
-  
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setData(prev => ({ ...prev, [name]: value }));
+    setData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleCheckboxChange = (name: string) => (checked: boolean) => {
-    setData(prev => ({ ...prev, [name]: checked }));
+    setData((prev) => ({ ...prev, [name]: checked }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -61,15 +65,17 @@ const HealthQuestionnairePage: React.FC = () => {
     }
 
     try {
-        console.log('Current user:', user);
-        await setDoc(doc(db, 'healthQuestionnaires', user.uid), data);
-        alert('Health questionnaire submitted successfully!');
-        router.push('/health-assistant');
-      } catch (error) {
-        console.error('Error submitting questionnaire:', error);
-        alert(`Failed to submit questionnaire: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      }
-    };
+      console.log('Current user:', user);
+      await setDoc(doc(db, 'healthQuestionnaires', user.uid), data);
+      alert('Health questionnaire submitted successfully!');
+      router.push('/health-assistant');
+    } catch (error) {
+      console.error('Error submitting questionnaire:', error);
+      alert(
+        `Failed to submit questionnaire: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -81,7 +87,9 @@ const HealthQuestionnairePage: React.FC = () => {
               <label>Blood Group</label>
               <Select
                 value={data.bloodGroup}
-                onValueChange={(value: string) => setData(prev => ({ ...prev, bloodGroup: value }))}
+                onValueChange={(value: string) =>
+                  setData((prev) => ({ ...prev, bloodGroup: value }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select Blood Group" />
