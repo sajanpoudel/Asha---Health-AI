@@ -70,4 +70,11 @@ describe('Sidebar', () => {
     const current = screen.getByText('My head hurts a lot ...').closest('button');
     expect(current).toHaveClass('bg-secondary');
   });
+
+  it('creates a new chat from the New Chat button', () => {
+    const props = baseProps();
+    render(<Sidebar {...props} />);
+    fireEvent.click(screen.getAllByRole('button', { name: /New Chat/ })[0]);
+    expect(props.createNewChat).toHaveBeenCalledTimes(1);
+  });
 });
