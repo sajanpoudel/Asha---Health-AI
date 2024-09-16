@@ -64,4 +64,10 @@ describe('Sidebar', () => {
     fireEvent.click(screen.getByText('My head hurts a lot ...'));
     expect(props.switchChat).toHaveBeenCalledWith('a');
   });
+
+  it('marks the current chat', () => {
+    render(<Sidebar {...baseProps()} />);
+    const current = screen.getByText('My head hurts a lot ...').closest('button');
+    expect(current).toHaveClass('bg-secondary');
+  });
 });
