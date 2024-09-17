@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage, auth } from '@/utils/firebase';
@@ -40,14 +40,14 @@ const UserProfilePage: React.FC = () => {
         // First, get the basic user data
         const userDocRef = doc(db, 'users', user.uid);
         const userDocSnap = await getDoc(userDocRef);
-        
+
         // Then, get the profile data
         const profileDocRef = doc(db, 'userProfiles', user.uid);
         const profileDocSnap = await getDoc(profileDocRef);
 
         if (profileDocSnap.exists()) {
           // If profile exists, use it
-          setProfile({ ...profileDocSnap.data() as UserProfile });
+          setProfile({ ...(profileDocSnap.data() as UserProfile) });
         } else if (userDocSnap.exists()) {
           // If profile doesn't exist but user data does, initialize profile with user data
           const userData = userDocSnap.data();
@@ -76,8 +76,9 @@ const UserProfilePage: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    if (name !== 'email') { // Prevent email from being changed
-      setProfile(prev => ({ ...prev, [name]: value }));
+    if (name !== 'email') {
+      // Prevent email from being changed
+      setProfile((prev) => ({ ...prev, [name]: value }));
     }
   };
 
@@ -95,7 +96,7 @@ const UserProfilePage: React.FC = () => {
       router.push('/');
       return;
     }
-  
+
     try {
       if (file) {
         const storageRef = ref(storage, `medicalRecords/${user.uid}/${file.name}`);
@@ -103,16 +104,22 @@ const UserProfilePage: React.FC = () => {
         const downloadURL = await getDownloadURL(storageRef);
         profile.medicalRecordUrl = downloadURL;
       }
-  
+
       // Update both the users collection and the userProfiles collection
-      await setDoc(doc(db, 'users', user.uid), { name: profile.name, email: profile.email }, { merge: true });
+      await setDoc(
+        doc(db, 'users', user.uid),
+        { name: profile.name, email: profile.email },
+        { merge: true }
+      );
       await setDoc(doc(db, 'userProfiles', user.uid), profile);
 
       alert('Profile updated successfully!');
       router.push('/health-assistant');
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert(`Failed to update profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert(
+        `Failed to update profile: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   };
 
@@ -129,13 +136,7 @@ const UserProfilePage: React.FC = () => {
                 onChange={handleInputChange}
                 placeholder="Full Name"
               />
-              <Input
-                name="email"
-                value={profile.email}
-                readOnly
-                placeholder="Email"
-                type="email"
-              />
+              <Input name="email" value={profile.email} readOnly placeholder="Email" type="email" />
               <Input
                 name="secondaryEmail"
                 value={profile.secondaryEmail}
@@ -170,11 +171,7 @@ const UserProfilePage: React.FC = () => {
                 placeholder="Weight (kg)"
                 type="number"
               />
-              <Input
-                type="file"
-                onChange={handleFileChange}
-                accept=".pdf,.doc,.docx"
-              />
+              <Input type="file" onChange={handleFileChange} accept=".pdf,.doc,.docx" />
               <Button type="submit">Save Profile</Button>
             </div>
           </form>
