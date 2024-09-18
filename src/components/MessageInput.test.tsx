@@ -27,4 +27,9 @@ describe('MessageInput', () => {
     render(<MessageInput {...baseProps()} />);
     expect(screen.getByPlaceholderText('Type your message...')).toBeInTheDocument();
   });
+
+  it('asks for the wake word while waiting for it', () => {
+    render(<MessageInput {...baseProps()} isWaitingForWakeWord />);
+    expect(screen.getByPlaceholderText('Say "Hey Asha" to start')).toBeInTheDocument();
+  });
 });
