@@ -32,4 +32,9 @@ describe('MessageInput', () => {
     render(<MessageInput {...baseProps()} isWaitingForWakeWord />);
     expect(screen.getByPlaceholderText('Say "Hey Asha" to start')).toBeInTheDocument();
   });
+
+  it('says Listening while the microphone is on', () => {
+    render(<MessageInput {...baseProps()} isListening />);
+    expect(screen.getByPlaceholderText('Listening...')).toBeInTheDocument();
+  });
 });
