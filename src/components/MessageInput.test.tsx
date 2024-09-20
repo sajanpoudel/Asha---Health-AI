@@ -37,4 +37,9 @@ describe('MessageInput', () => {
     render(<MessageInput {...baseProps()} isListening />);
     expect(screen.getByPlaceholderText('Listening...')).toBeInTheDocument();
   });
+
+  it('says Speaking while the answer is read aloud', () => {
+    render(<MessageInput {...baseProps()} isSpeaking />);
+    expect(screen.getByPlaceholderText('Speaking...')).toBeInTheDocument();
+  });
 });
