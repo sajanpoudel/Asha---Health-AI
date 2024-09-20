@@ -8,8 +8,7 @@ import { constructPrompt } from '../utils/aiUtils';
 import { analyzeEmotion, addEmotionalNuance, addPersonalTouch, addSupportiveLanguage } from '../utils/emotionUtils';
 import { formatAiResponse, stripHtmlAndFormatting, simplifyText, addNaturalPauses, decodeHtmlEntities } from '../utils/textUtils';
 
-// Create a Web Worker for heavy computations
-const worker = new Worker(new URL('../workers/aiWorker.ts', import.meta.url));
+
 
 const useHealthAssistant = (accessToken: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -51,6 +50,18 @@ const useHealthAssistant = (accessToken: string) => {
   const sentenceBuffer = useRef<string[]>([]);
   const isProcessingAudio = useRef(false);
   const isGeneratingText = useRef(false);
+  const [worker, setWorker] = useState<Worker | null>(null);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const newWorker = new Worker(new URL('../workers/aiWorker.ts', import.meta.url));
+      setWorker(newWorker);
+
+      return () => {
+        newWorker.terminate();
+      };
+    }
+  }, []);
+
 
   useEffect(() => {
     const loadVoices = () => {
@@ -371,6 +382,10 @@ const useHealthAssistant = (accessToken: string) => {
   };
 
   const processAiChunk = async (chunk: string) => {
+    if (!worker) {
+      console.error('Worker is not initialized');
+      return chunk; // Return the original chunk if worker is not available
+    }
     return new Promise<string>((resolve) => {
       worker.onmessage = (event) => {
         resolve(decodeHtmlEntities(event.data));
