@@ -1,14 +1,5 @@
-import dynamic from 'next/dynamic'
-
-const HealthAssistant = dynamic(
-  () => import('@/components/pages/HealthAssistant'),
-  { ssr: false }
-)
+import HealthAssistant from '@/components/pages/HealthAssistant';
 
 export default function Home() {
-  return (
-    <main>
-      <HealthAssistant />
-    </main>
-  )
+  return <HealthAssistant />;
 }

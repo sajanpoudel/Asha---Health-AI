@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-export const handleAppointmentBooking = async (userMessage: string, accessToken: string): Promise<string> => {
+export const handleAppointmentBooking = async (userMessage: string, accessToken: string) => {
   console.log("Detected appointment booking request");
 
   const dateTimeMatch = userMessage.match(/(\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?))/i);
@@ -10,6 +10,10 @@ export const handleAppointmentBooking = async (userMessage: string, accessToken:
   let time = dateTimeMatch ? dateTimeMatch[1].toLowerCase() : null;
   if (!time) {
     return "I'm sorry, I couldn't understand the time for the appointment. Could you please specify the time clearly, like '5:00 AM' or '2:30 PM'?";
+  }
+  if (!accessToken) {
+    console.error('Access token is missing');
+    return "I'm sorry, there was an error with your authentication. Please try logging in again.";
   }
 
   time = normalizeTime(time);
@@ -42,9 +46,11 @@ Now, let me give you a gentle hug virtually and offer my continued support. [aff
 Is there anything else you'd like to know about the appointment or any concerns you'd like to discuss?`;
 };
 
-export const bookAppointment = async (accessToken: string, dateTime: string, timeZone: string): Promise<string> => {
+export const bookAppointment = async (accessToken: string, dateTime: string, timeZone: string) => {
   try {
     console.log(`Sending request to book appointment for ${dateTime} in time zone ${timeZone}`);
+    console.log('Access Token:', accessToken ? 'present' : 'missing');
+
     const response = await fetch('/api/google/calendar', {
       method: 'POST',
       headers: {

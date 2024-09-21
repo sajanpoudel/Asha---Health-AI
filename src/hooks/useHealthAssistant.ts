@@ -10,7 +10,15 @@ import { formatAiResponse, stripHtmlAndFormatting, simplifyText, addNaturalPause
 
 
 
-const useHealthAssistant = (accessToken: string) => {
+const useHealthAssistant = () => {
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  useEffect(() => {
+    const storedToken = localStorage.getItem('accessToken');
+    if (storedToken) {
+      setAccessToken(storedToken);
+    }
+  }, []);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
     {
@@ -255,10 +263,16 @@ const useHealthAssistant = (accessToken: string) => {
   const handleAiResponse = async (userMessage: string) => {
     try {
       console.log("Received user message:", userMessage);
+      console.log("Access token:", accessToken);
+    
 
 
 
       if (isAppointmentRequest(userMessage)) {
+        if (!accessToken) {
+          console.error('Access token is missing');
+          return "I'm sorry, there was an error with your authentication. Please try logging in again.";
+        }
         const response = await handleAppointmentBooking(userMessage, accessToken);
         updateChatMessages(userMessage, response, true);
         await speakText(response);
@@ -266,6 +280,10 @@ const useHealthAssistant = (accessToken: string) => {
       }
 
       if (isEmailRequest(userMessage)) {
+        if (!accessToken) {
+          console.error('Access token is missing');
+          return "I'm sorry, there was an error with your authentication. Please try logging in again.";
+        }
         const emailQuery = determineEmailQueryType(userMessage);
         const emailData = await fetchEmailData(accessToken, emailQuery);
         const response = await generateDetailedEmailResponse(emailData, emailQuery);
@@ -382,10 +400,10 @@ const useHealthAssistant = (accessToken: string) => {
   };
 
   const processAiChunk = async (chunk: string) => {
-    if (!worker) {
-      console.error('Worker is not initialized');
-      return chunk; // Return the original chunk if worker is not available
-    }
+      if (!worker) {
+    console.error('Worker is not initialized');
+    return chunk; // Return the original chunk if worker is not available
+  }
     return new Promise<string>((resolve) => {
       worker.onmessage = (event) => {
         resolve(decodeHtmlEntities(event.data));
@@ -607,6 +625,7 @@ const useHealthAssistant = (accessToken: string) => {
     handleSendMessage,
     speakText,
     processQuery,
+    accessToken
   };
 };
 

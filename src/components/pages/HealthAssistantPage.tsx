@@ -20,7 +20,7 @@ interface HealthAssistantPageProps {
   accessToken: string;
 }
 
-const HealthAssistantPage: React.FC<HealthAssistantPageProps> = ({ personalData, accessToken }) => {
+const HealthAssistantPage: React.FC<HealthAssistantPageProps> = ({ personalData }) => {
   const {
     isDarkMode,
     isSidebarOpen,
@@ -43,7 +43,8 @@ const HealthAssistantPage: React.FC<HealthAssistantPageProps> = ({ personalData,
     startListening,
     speakText,
     recognitionError,
-  } = useHealthAssistant(accessToken);
+    accessToken
+  } = useHealthAssistant();
 
   return (
     <div className={`flex h-screen ${isDarkMode ? 'dark' : ''} bg-background dark:bg-background font-sans relative overflow-hidden`}>
