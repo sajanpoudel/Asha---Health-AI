@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { Menu } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -7,6 +9,7 @@ import ChatArea from '../ChatArea';
 import MessageInput from '../MessageInput';
 import '@/types';
 import { motion } from "framer-motion";
+import Link from 'next/link';
 
 interface HealthAssistantPageProps {
   personalData: {
@@ -17,7 +20,7 @@ interface HealthAssistantPageProps {
   accessToken: string;
 }
 
-const HealthAssistantPage: React.FC<HealthAssistantPageProps> = ({ personalData, accessToken }) => {
+const HealthAssistantPage: React.FC<HealthAssistantPageProps> = ({ personalData }) => {
   const {
     isDarkMode,
     isSidebarOpen,
@@ -40,7 +43,8 @@ const HealthAssistantPage: React.FC<HealthAssistantPageProps> = ({ personalData,
     startListening,
     speakText,
     recognitionError,
-  } = useHealthAssistant(accessToken);
+    accessToken
+  } = useHealthAssistant();
 
   return (
     <div className={`flex h-screen ${isDarkMode ? 'dark' : ''} bg-background dark:bg-background font-sans relative overflow-hidden`}>
@@ -86,6 +90,14 @@ const HealthAssistantPage: React.FC<HealthAssistantPageProps> = ({ personalData,
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
+        <nav className="p-4 bg-primary text-primary-foreground">
+      <Link href="/profile" passHref>
+        <Button variant="outline" className="mr-2">Profile</Button>
+      </Link>
+      <Link href="/questionnaire" passHref>
+        <Button variant="outline">Health Questionnaire</Button>
+      </Link>
+    </nav>
         <ChatArea
           getCurrentChat={getCurrentChat}
           isGeneratingResponse={isGeneratingResponse}
