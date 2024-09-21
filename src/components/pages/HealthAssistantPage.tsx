@@ -1,15 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Menu } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import useHealthAssistant from '@/hooks/useHealthAssistant';
 import Sidebar from '@/components/Sidebar';
 import ChatArea from '../ChatArea';
 import MessageInput from '../MessageInput';
+import ChatHistorySection from '../ChatHistorySection';
 import '@/types';
 import { motion } from "framer-motion";
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface HealthAssistantPageProps {
   personalData: {
@@ -46,8 +47,65 @@ const HealthAssistantPage: React.FC<HealthAssistantPageProps> = ({ personalData 
     accessToken
   } = useHealthAssistant();
 
+  const [activeTab, setActiveTab] = useState('chat');
+  const router = useRouter();
+
+  const handleTabChange = (tab: string) => {
+    if (tab === 'profile') {
+      router.push('/profile');
+    } else if (tab === 'questionnaire') {
+      router.push('/questionnaire');
+    } else {
+      setActiveTab(tab);
+    }
+  };
+
+  // Apply dark mode to the root element
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
+  const renderMainContent = () => {
+    switch (activeTab) {
+      case 'chat':
+        return (
+          <>
+            <ChatArea
+              getCurrentChat={getCurrentChat}
+              isGeneratingResponse={isGeneratingResponse}
+            />
+            <MessageInput
+              inputMessage={inputMessage}
+              setInputMessage={setInputMessage}
+              isListening={isListening}
+              isSpeaking={isSpeaking}
+              isWaitingForWakeWord={isWaitingForWakeWord}
+              transcript={transcript}
+              isDarkMode={isDarkMode}
+              voiceIconAnimation={voiceIconAnimation}
+              handleSendMessage={handleSendMessage}
+              startListening={startListening}
+              speakText={speakText}
+              getCurrentChat={getCurrentChat}
+              isProcessing={isListening || isGeneratingResponse}
+            />
+          </>
+        );
+      case 'history':
+        return <ChatHistorySection chats={chats} switchChat={switchChat} setActiveTab={setActiveTab} />;
+      case 'records':
+        return <div>Medical Records Section</div>;
+      default:
+        return <div>Unknown Section</div>;
+    }
+  };
+
   return (
-    <div className={`flex h-screen ${isDarkMode ? 'dark' : ''} bg-white dark:bg-gray-900 font-sans relative overflow-hidden`}>
+    <div className="flex h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-sans relative overflow-hidden">
       {/* Glowing effect */}
       {isListening && (
         <div className="absolute inset-0 z-0 pointer-events-none">
@@ -73,40 +131,20 @@ const HealthAssistantPage: React.FC<HealthAssistantPageProps> = ({ personalData 
       <Sidebar
         isOpen={isSidebarOpen}
         toggleSidebar={toggleSidebar}
-        chats={chats}
-        currentChatId={currentChatId}
         isDarkMode={isDarkMode}
         setIsDarkMode={setIsDarkMode}
         createNewChat={createNewChat}
-        switchChat={switchChat}
+        setActiveTab={handleTabChange}
+        activeTab={activeTab}
       />
 
       <motion.div 
-        className={`flex-1 flex flex-col ${isSidebarOpen ? 'ml-80' : 'ml-0'} transition-all duration-300 relative z-10`}
+        className={`flex-1 flex flex-col ${isSidebarOpen ? 'ml-64' : 'ml-0'} transition-all duration-300 relative z-10`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
-     
-        <ChatArea
-          getCurrentChat={getCurrentChat}
-          isGeneratingResponse={isGeneratingResponse}
-        />
-        <MessageInput
-          inputMessage={inputMessage}
-          setInputMessage={setInputMessage}
-          isListening={isListening}
-          isSpeaking={isSpeaking}
-          isWaitingForWakeWord={isWaitingForWakeWord}
-          transcript={transcript}
-          isDarkMode={isDarkMode}
-          voiceIconAnimation={voiceIconAnimation}
-          handleSendMessage={handleSendMessage}
-          startListening={startListening}
-          speakText={speakText}
-          getCurrentChat={getCurrentChat}
-          isProcessing={isListening || isGeneratingResponse}
-        />
+        {renderMainContent()}
       </motion.div>
 
       {recognitionError && (

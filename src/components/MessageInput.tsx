@@ -43,8 +43,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const showListeningAnimation = isListening || (isProcessing && transcript !== '' && !isSpeaking);
 
   return (
-    <div className="p-6 bg-background dark:bg-background relative">
-      <div className="flex items-center bg-card dark:bg-card rounded-full shadow-lg p-2 relative overflow-hidden">
+      <div className="flex items-center bg-card m-7 dark:bg-card rounded-full shadow-lg p-2 relative overflow-hidden">
         {showListeningAnimation && (
           <div className="absolute inset-0 pointer-events-none">
             <div className="w-full h-full bg-gradient-to-r from-blue-400/20 to-indigo-500/20 animate-pulse"></div>
@@ -107,7 +106,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
           <Send className="w-6 h-6 text-primary-foreground" />
         </Button>
       </div>
-    </div>
+   
   );
 };
 
