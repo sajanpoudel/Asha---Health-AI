@@ -1,84 +1,128 @@
 import React from 'react';
-import { Plus, MessageSquare, Sun, Moon, Menu, X, Settings } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from 'framer-motion';
+import { Home, User, FileText, Plus, Settings, ChevronLeft, ChevronRight, Moon, Sun, MessageSquare } from 'lucide-react';
+import Link from 'next/link';
 
 interface SidebarProps {
-  isSidebarOpen: boolean;
+  isOpen: boolean;
   toggleSidebar: () => void;
-  createNewChat: () => void;
   chats: Chat[];
   currentChatId: string;
-  switchChat: (id: string) => void;
   isDarkMode: boolean;
   setIsDarkMode: (isDark: boolean) => void;
+  createNewChat: () => void;
+  switchChat: (chatId: string) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
-  isSidebarOpen,
+  isOpen,
   toggleSidebar,
-  createNewChat,
   chats,
   currentChatId,
-  switchChat,
   isDarkMode,
-  setIsDarkMode
+  setIsDarkMode,
+  createNewChat,
+  switchChat
 }) => {
+  const sidebarVariants = {
+    open: { x: 0, width: 280 },
+    closed: { x: -280, width: 0 },
+  };
+
   return (
-    <AnimatePresence>
-      {isSidebarOpen && (
-        <motion.div
-          initial={{ x: -300 }}
-          animate={{ x: 0 }}
-          exit={{ x: -300 }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="w-80 h-full bg-background dark:bg-card shadow-xl flex flex-col fixed left-0 top-0 z-50"
-        >
-          <div className="p-6 border-b border-border flex items-center justify-between">
-            <h2 className="text-3xl font-extrabold text-foreground font-sans">ashaHealth</h2>
-            <Button onClick={toggleSidebar} variant="ghost" size="icon" className="text-muted-foreground hover:bg-secondary/50 dark:hover:bg-secondary/50">
-              <X size={24} />
-            </Button>
-          </div>
-          <div className="p-6">
-            <Button onClick={createNewChat} className="w-full flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground py-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg text-lg font-semibold">
-              <Plus className="mr-2" size={24} /> New Chat
-            </Button>
-          </div>
-          <ScrollArea className="flex-grow px-4">
+    <motion.div
+      className={`fixed top-0 left-0 h-full bg-white dark:bg-gray-900 shadow-lg z-50 overflow-hidden ${isDarkMode ? 'dark' : ''}`}
+      initial="closed"
+      animate={isOpen ? 'open' : 'closed'}
+      variants={sidebarVariants}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+    >
+      <div className="flex flex-col h-full p-4 relative">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white">Asha Health</h2>
+          <motion.button
+    onClick={createNewChat}
+    className="p-2 rounded-full bg-blue-500 text-white shadow-md"
+    whileHover={{ scale: 1.1 }}
+    whileTap={{ scale: 0.95 }}
+  >
+    <Plus size={20} />
+  </motion.button>
+
+          <motion.button
+            className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={toggleSidebar}
+          >
+            {isOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+          </motion.button>
+          
+        </div>
+
+   
+
+        <nav className="space-y-2 mb-6">
+          <SidebarLink href="/health-assistant" icon={<Home size={20} />} text="Home" />
+          <SidebarLink href="/profile" icon={<User size={20} />} text="Profile" />
+          <SidebarLink href="/questionnaire" icon={<FileText size={20} />} text="Questionnaire" />
+        </nav>
+
+        <div className="flex-grow overflow-y-auto">
+          <h3 className="text-sm font-semibold mb-2 text-gray-600 dark:text-gray-400">Your Chats</h3>
+          <div className="space-y-1">
             {chats.map((chat) => (
-              <Button
+              <motion.button
                 key={chat.id}
                 onClick={() => switchChat(chat.id)}
-                className={`w-full text-left mb-3 py-3 px-4 rounded-lg transition-all duration-200 ${
+                className={`w-full p-2 text-left rounded-lg transition-colors flex items-center ${
                   chat.id === currentChatId 
-                    ? 'bg-secondary text-secondary-foreground shadow-md' 
-                    : 'hover:bg-secondary/50 text-muted-foreground'
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' 
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200'
                 }`}
+                whileHover={{ x: 5 }}
               >
-                <MessageSquare className="mr-3 inline-block" size={20} />
-                {chat.messages.length > 0 ? chat.messages[0].content.slice(0, 20) + '...' : 'New Chat'}
-              </Button>
+                <MessageSquare size={16} className="mr-2" />
+                <span className="truncate">{chat.name}</span>
+              </motion.button>
             ))}
-          </ScrollArea>
-          <div className="p-6 border-t border-border dark:border-gray-800 flex justify-between items-center">
-            <Button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              variant="outline"
-              size="icon"
-              className="text-muted-foreground border-border hover:bg-secondary/50"
-            >
-              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </Button>
-            <Button variant="outline" size="icon" className="text-muted-foreground border-border hover:bg-secondary/50">
-              <Settings size={20} />
-            </Button>
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        </div>
+
+        <div className="mt-auto flex justify-between items-center">
+          <motion.button
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            className="p-3 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+          </motion.button>
+          <Link href="/settings" passHref>
+            <motion.a
+              className="m-3 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Settings size={20} />
+            </motion.a>
+          </Link>
+        </div>
+      </div>
+    </motion.div>
   );
 };
+
+const SidebarLink: React.FC<{ href: string; icon: React.ReactNode; text: string }> = ({ href, icon, text }) => (
+  <Link href={href} passHref>
+    <motion.a
+      className="flex items-center space-x-3 p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+      whileHover={{ x: 5 }}
+    >
+      {icon}
+      <span className="text-sm font-medium">{text}</span>
+    </motion.a>
+  </Link>
+);
 
 export default Sidebar;

@@ -1,34 +1,33 @@
 import React from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import { motion } from 'framer-motion';
 
 interface ChatMessageProps {
   message: {
     type: 'user' | 'ai';
     content: string;
   };
-  isLoading?: boolean;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLoading }) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
+  const isAi = message.type === 'ai';
+
   return (
-    <div className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
-      <Card className={`max-w-[70%] ${message.type === 'user' ? 'bg-[#000000] text-[#FFFFFF]' : 'bg-[#FFFFFF] dark:bg-[#1A1A1A]'} rounded-2xl shadow-lg`}>
-        <CardContent className="p-4">
-          {isLoading ? (
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-gray-500 rounded-full animate-pulse"></div>
-              <div className="w-2 h-2 bg-gray-500 rounded-full animate-pulse delay-75"></div>
-              <div className="w-2 h-2 bg-gray-500 rounded-full animate-pulse delay-150"></div>
-            </div>
-          ) : (
-            <p 
-              className={`${message.type === 'ai' ? 'text-[#000000] dark:text-[#FFFFFF]' : ''} whitespace-pre-wrap`}
-              dangerouslySetInnerHTML={{ __html: message.content }}
-            />
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    <motion.div
+      className={`flex ${isAi ? 'justify-start' : 'justify-end'}`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div
+        className={`max-w-3/4 p-3 rounded-lg ${
+          isAi
+            ? 'bg-blue-100 text-blue-900'
+            : 'bg-green-100 text-green-900'
+        }`}
+      >
+        <p className="text-sm" dangerouslySetInnerHTML={{ __html: message.content }}></p>
+      </div>
+    </motion.div>
   );
 };
 

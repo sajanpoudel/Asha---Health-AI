@@ -47,14 +47,11 @@ const HealthAssistantPage: React.FC<HealthAssistantPageProps> = ({ personalData 
   } = useHealthAssistant();
 
   return (
-    <div className={`flex h-screen ${isDarkMode ? 'dark' : ''} bg-background dark:bg-background font-sans relative overflow-hidden`}>
-      {/* Enhanced Glowing effect */}
+    <div className={`flex h-screen ${isDarkMode ? 'dark' : ''} bg-white dark:bg-gray-900 font-sans relative overflow-hidden`}>
+      {/* Glowing effect */}
       {isListening && (
         <div className="absolute inset-0 z-0 pointer-events-none">
-          <div className="absolute inset-0 bg-primary opacity-5 animate-pulse"></div>
-          <div className="absolute inset-0 bg-primary opacity-5 animate-pulse delay-300"></div>
-          <div className="absolute inset-0 bg-primary opacity-5 animate-pulse delay-600"></div>
-          <div className="absolute inset-0 bg-gradient-radial from-primary/20 to-transparent animate-ping"></div>
+          <div className="absolute inset-0 bg-blue-500 opacity-5 animate-pulse"></div>
         </div>
       )}
 
@@ -66,22 +63,22 @@ const HealthAssistantPage: React.FC<HealthAssistantPageProps> = ({ personalData 
         >
           <Button
             onClick={toggleSidebar}
-            className="fixed top-6 left-6 z-50 rounded-full p-3 bg-background dark:bg-card shadow-lg hover:shadow-xl transition-all duration-200"
+            className="fixed top-6 left-6 z-50 rounded-full p-3 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-200"
           >
-            <Menu className="w-6 h-6 text-foreground" />
+            <Menu className="w-6 h-6 text-gray-800 dark:text-white" />
           </Button>
         </motion.div>
       )}
 
       <Sidebar
+        isOpen={isSidebarOpen}
+        toggleSidebar={toggleSidebar}
         chats={chats}
         currentChatId={currentChatId}
         isDarkMode={isDarkMode}
         setIsDarkMode={setIsDarkMode}
-        isSidebarOpen={isSidebarOpen}
         createNewChat={createNewChat}
         switchChat={switchChat}
-        toggleSidebar={toggleSidebar}
       />
 
       <motion.div 
@@ -90,14 +87,7 @@ const HealthAssistantPage: React.FC<HealthAssistantPageProps> = ({ personalData 
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
-        <nav className="p-4 bg-primary text-primary-foreground">
-      <Link href="/profile" passHref>
-        <Button variant="outline" className="mr-2">Profile</Button>
-      </Link>
-      <Link href="/questionnaire" passHref>
-        <Button variant="outline">Health Questionnaire</Button>
-      </Link>
-    </nav>
+     
         <ChatArea
           getCurrentChat={getCurrentChat}
           isGeneratingResponse={isGeneratingResponse}
@@ -115,7 +105,7 @@ const HealthAssistantPage: React.FC<HealthAssistantPageProps> = ({ personalData 
           startListening={startListening}
           speakText={speakText}
           getCurrentChat={getCurrentChat}
-          isProcessing={isListening || isGeneratingResponse} // Add this line
+          isProcessing={isListening || isGeneratingResponse}
         />
       </motion.div>
 

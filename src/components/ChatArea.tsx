@@ -1,8 +1,7 @@
 import React, { useRef, useEffect } from 'react';
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { motion, AnimatePresence } from 'framer-motion';
 import ChatMessage from './ChatMessage';
-import '@/types';
-import { motion } from "framer-motion";
+import '../types'
 
 interface ChatAreaProps {
   getCurrentChat: () => Chat;
@@ -10,37 +9,40 @@ interface ChatAreaProps {
 }
 
 const ChatArea: React.FC<ChatAreaProps> = ({ getCurrentChat, isGeneratingResponse }) => {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   }, [getCurrentChat().messages]);
 
-  const currentChat: Chat = getCurrentChat();
-
   return (
-    <ScrollArea className="flex-grow p-8 pb-24 bg-background dark:bg-background">
-      {currentChat.messages.map((message: Message, index: number) => (
-        <motion.div
-          key={index}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <ChatMessage message={message} />
-        </motion.div>
-      ))}
+    <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+      <AnimatePresence>
+        {getCurrentChat().messages.map((message, index) => (
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <ChatMessage message={message} />
+          </motion.div>
+        ))}
+      </AnimatePresence>
       {isGeneratingResponse && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          className="text-gray-500 italic"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, repeat: Infinity, repeatType: 'reverse' }}
         >
-          <ChatMessage message={{ type: 'ai', content: 'Generating response...' }} isLoading />
+          AI is thinking...
         </motion.div>
       )}
-      <div ref={messagesEndRef} />
-    </ScrollArea>
+    </div>
   );
 };
 
