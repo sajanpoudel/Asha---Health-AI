@@ -42,4 +42,9 @@ describe('MessageInput', () => {
     render(<MessageInput {...baseProps()} isSpeaking />);
     expect(screen.getByPlaceholderText('Speaking...')).toBeInTheDocument();
   });
+
+  it('shows the transcript when there is one', () => {
+    render(<MessageInput {...baseProps()} transcript="I have a cough" />);
+    expect(screen.getByPlaceholderText('I have a cough')).toBeInTheDocument();
+  });
 });
