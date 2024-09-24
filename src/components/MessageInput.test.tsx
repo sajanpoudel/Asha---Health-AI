@@ -47,4 +47,11 @@ describe('MessageInput', () => {
     render(<MessageInput {...baseProps()} transcript="I have a cough" />);
     expect(screen.getByPlaceholderText('I have a cough')).toBeInTheDocument();
   });
+
+  it('reports typing through setInputMessage', () => {
+    const props = baseProps();
+    render(<MessageInput {...props} />);
+    fireEvent.change(screen.getByPlaceholderText('Type your message...'), { target: { value: 'Hi' } });
+    expect(props.setInputMessage).toHaveBeenCalledWith('Hi');
+  });
 });
