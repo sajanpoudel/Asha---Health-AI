@@ -54,4 +54,11 @@ describe('MessageInput', () => {
     fireEvent.change(screen.getByPlaceholderText('Type your message...'), { target: { value: 'Hi' } });
     expect(props.setInputMessage).toHaveBeenCalledWith('Hi');
   });
+
+  it('starts listening from the microphone button', () => {
+    const props = baseProps();
+    render(<MessageInput {...props} />);
+    fireEvent.click(buttons()[0]);
+    expect(props.startListening).toHaveBeenCalledTimes(1);
+  });
 });
