@@ -61,4 +61,9 @@ describe('MessageInput', () => {
     fireEvent.click(buttons()[0]);
     expect(props.startListening).toHaveBeenCalledTimes(1);
   });
+
+  it('disables the send button when there is nothing to send', () => {
+    render(<MessageInput {...baseProps()} />);
+    expect(buttons()[2]).toBeDisabled();
+  });
 });
