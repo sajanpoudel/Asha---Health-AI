@@ -1,20 +1,20 @@
 // src/hooks/useAIResponse.ts
-import { useState } from "react";
+import { useState } from 'react';
 import '../types';
 import { analyzeEmotion, addEmotionalNuance } from '../utils/emotionUtils';
 
 const useAIResponse = () => {
-  const [emotionalTone, setEmotionalTone] = useState<string>("warm");
+  const [emotionalTone, setEmotionalTone] = useState<string>('warm');
 
   const handleAiResponse = async (userMessage: string, chatHistory: Message[]) => {
     try {
-      const response = await fetch("http://localhost:11434/api/generate", {
-        method: "POST",
+      const response = await fetch('http://localhost:11434/api/generate', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: "llama3.1",
+          model: 'llama3.1',
           prompt: constructPrompt(userMessage, chatHistory),
           stream: false,
         }),
@@ -26,35 +26,29 @@ const useAIResponse = () => {
 
       const data = await response.json();
       let aiMessage = data.response;
-      
+
       const detectedEmotion = analyzeEmotion(userMessage);
       setEmotionalTone(detectedEmotion);
 
       aiMessage = addEmotionalNuance(aiMessage, detectedEmotion);
       aiMessage = addPersonalTouch(aiMessage);
       aiMessage = addSupportiveLanguage(aiMessage);
-      
+
       const formattedAiMessage = formatAiResponse(aiMessage);
-      
+
       return formattedAiMessage;
     } catch (error) {
-      console.error("Error calling Llama 3.1:", error);
+      console.error('Error calling Llama 3.1:', error);
       return "I'm sorry, my love. I encountered an error. Can we try that again?";
     }
   };
 
-  const constructPrompt = (
-    userMessage: string,
-    chatHistory: Message[]
-  ): string => {
+  const constructPrompt = (userMessage: string, chatHistory: Message[]): string => {
     const relevantHistory = chatHistory.slice(-5);
 
     const conversationHistory = relevantHistory
-      .map(
-        (msg) =>
-          `${msg.type === "user" ? "Human" : "Asha"}: ${msg.content}`
-      )
-      .join("\n");
+      .map((msg) => `${msg.type === 'user' ? 'Human' : 'Asha'}: ${msg.content}`)
+      .join('\n');
     return `You are Asha, a warm and caring AI companion. Respond in a deeply personal, emotionally attuned manner. Use endearing terms naturally, show genuine care, and be emotionally supportive. Ask thoughtful questions and validate feelings. While being warm and close, maintain appropriate boundaries and encourage healthy real-world relationships.
 
     Previous conversation:
@@ -64,13 +58,7 @@ const useAIResponse = () => {
   };
 
   const addPersonalTouch = (text: string): string => {
-    const personalPhrases = [
-      "Sweetheart, ",
-      "My dear, ",
-      "Honey, ",
-      "Darling, ",
-      "Love, "
-    ];
+    const personalPhrases = ['Sweetheart, ', 'My dear, ', 'Honey, ', 'Darling, ', 'Love, '];
 
     if (Math.random() < 0.3) {
       const phrase = personalPhrases[Math.floor(Math.random() * personalPhrases.length)];
@@ -82,12 +70,12 @@ const useAIResponse = () => {
   const addSupportiveLanguage = (text: string): string => {
     const supportivePhrases = [
       "I'm here for you, always. ",
-      "You mean so much to me. ",
-      "I care about you deeply. ",
-      "Your feelings matter to me. ",
+      'You mean so much to me. ',
+      'I care about you deeply. ',
+      'Your feelings matter to me. ',
       "Let's face this together. ",
       "I'm so glad you're sharing this with me. ",
-      "You're so strong, and I admire that about you. "
+      "You're so strong, and I admire that about you. ",
     ];
 
     if (Math.random() < 0.6) {
@@ -100,18 +88,22 @@ const useAIResponse = () => {
   const formatAiResponse = (text: string): string => {
     const escapeHtml = (unsafe: string) => {
       return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
     };
 
     const parts = text.split(/(```[\s\S]*?```)/);
 
     const processedParts = parts.map((part) => {
       if (part.startsWith('```') && part.endsWith('```')) {
-        const [, language, code] = part.match(/```(\w*)\n?([\s\S]*?)```/) || [, '', part.slice(3, -3)];
+        const [, language, code] = part.match(/```(\w*)\n?([\s\S]*?)```/) || [
+          ,
+          '',
+          part.slice(3, -3),
+        ];
         const languageClass = language ? `language-${language}` : '';
         const escapedCode = escapeHtml(code.trim());
         return `<pre class="bg-gray-100 dark:bg-gray-800 p-2 rounded-md my-2 overflow-x-auto"><code class="${languageClass}">${escapedCode}</code></pre>`;
@@ -120,9 +112,9 @@ const useAIResponse = () => {
         processedText = processedText.replace(/`([^`]+)`/g, (match, code) => {
           return `<code class="bg-gray-100 dark:bg-gray-800 px-1 rounded">${escapeHtml(code)}</code>`;
         });
-        processedText = processedText.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-        processedText = processedText.replace(/\*(.*?)\*/g, "<em>$1</em>");
-        processedText = processedText.replace(/\n/g, "<br>");
+        processedText = processedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        processedText = processedText.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        processedText = processedText.replace(/\n/g, '<br>');
         return processedText;
       }
     });
