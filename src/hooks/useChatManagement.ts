@@ -1,12 +1,12 @@
 // src/hooks/useChatManagement.ts
-import { useState } from "react";
-import  "@/types";
+import { useState } from 'react';
+import '@/types';
 
-const useChatManagement = (handleAiResponse: (userMessage: string, chatHistory: Message[]) => Promise<string>) => {
-  const [chats, setChats] = useState<Chat[]>([
-    { id: "1", name: "Current Chat", messages: [] },
-  ]);
-  const [currentChatId, setCurrentChatId] = useState("1");
+const useChatManagement = (
+  handleAiResponse: (userMessage: string, chatHistory: Message[]) => Promise<string>
+) => {
+  const [chats, setChats] = useState<Chat[]>([{ id: '1', name: 'Current Chat', messages: [] }]);
+  const [currentChatId, setCurrentChatId] = useState('1');
 
   const createNewChat = () => {
     const newChat: Chat = {
@@ -29,9 +29,7 @@ const useChatManagement = (handleAiResponse: (userMessage: string, chatHistory: 
   const addMessageToCurrentChat = (message: Message) => {
     setChats((prevChats) =>
       prevChats.map((chat) =>
-        chat.id === currentChatId
-          ? { ...chat, messages: [...chat.messages, message] }
-          : chat
+        chat.id === currentChatId ? { ...chat, messages: [...chat.messages, message] } : chat
       )
     );
   };
