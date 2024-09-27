@@ -8,17 +8,17 @@ const usePiper = (emotionalTone: string, voiceStyle: string) => {
     setIsSpeaking(true);
     try {
       const processedText = prepareTextForSpeech(text);
-      console.log("Processed text for speech:", processedText); // For debugging
+      console.log('Processed text for speech:', processedText); // For debugging
 
       const response = await fetch('/api/text-to-speech', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           text: processedText,
           emotion: emotionalTone,
-          voiceStyle: voiceStyle
+          voiceStyle: voiceStyle,
         }),
       });
 
