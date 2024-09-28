@@ -25,7 +25,7 @@ const useUiState = () => {
     voiceIconColor,
     voiceIconAnimation,
     toggleSidebar,
-    toggleDarkMode
+    toggleDarkMode,
   };
 };
 
