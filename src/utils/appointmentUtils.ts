@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server';
 
 export const handleAppointmentBooking = async (userMessage: string, accessToken: string) => {
-  console.log("Detected appointment booking request");
+  console.log('Detected appointment booking request');
 
   const dateTimeMatch = userMessage.match(/(\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?))/i);
-  const dateMatch = userMessage.match(/(tomorrow|today|\d{1,2}\/\d{1,2}\/\d{4})/i) || [null, "tomorrow"];
-  const doctorMatch = userMessage.match(/doctor(?:'s name)?\s+(\w+\s*\w*)/i) || [null, ""];
+  const dateMatch = userMessage.match(/(tomorrow|today|\d{1,2}\/\d{1,2}\/\d{4})/i) || [
+    null,
+    'tomorrow',
+  ];
+  const doctorMatch = userMessage.match(/doctor(?:'s name)?\s+(\w+\s*\w*)/i) || [null, ''];
 
   let time = dateTimeMatch ? dateTimeMatch[1].toLowerCase() : null;
   if (!time) {
@@ -20,12 +23,20 @@ export const handleAppointmentBooking = async (userMessage: string, accessToken:
   const date = getAppointmentDate(dateMatch[1]);
   const [hours, minutes] = parseTime(time);
   const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const appointmentDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), hours, minutes);
+  const appointmentDate = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    hours,
+    minutes
+  );
 
-  const doctorName = doctorMatch[1] || "your doctor";
+  const doctorName = doctorMatch[1] || 'your doctor';
   const dateTime = appointmentDate.toISOString();
 
-  console.log(`Attempting to book appointment for ${dateTime} (${hours}:${minutes.toString().padStart(2, '0')} ${time.includes('pm') ? 'PM' : 'AM'}) with ${doctorName} in time zone ${userTimeZone}`);
+  console.log(
+    `Attempting to book appointment for ${dateTime} (${hours}:${minutes.toString().padStart(2, '0')} ${time.includes('pm') ? 'PM' : 'AM'}) with ${doctorName} in time zone ${userTimeZone}`
+  );
   const bookingResponse = await bookAppointment(accessToken, dateTime, userTimeZone);
 
   const formattedDate = appointmentDate.toLocaleString('en-US', {
@@ -36,7 +47,7 @@ export const handleAppointmentBooking = async (userMessage: string, accessToken:
     hour: 'numeric',
     minute: 'numeric',
     hour12: true,
-    timeZone: userTimeZone
+    timeZone: userTimeZone,
   });
 
   return `[with a smile in my voice] Sweet friend! I've taken care of booking the appointment for you with ${doctorName} for ${formattedDate}. ${bookingResponse}
@@ -84,9 +95,9 @@ const normalizeTime = (time: string): string => {
 };
 
 const getAppointmentDate = (dateStr: string): Date => {
-  return dateStr.toLowerCase() === 'tomorrow' ? 
-    new Date(new Date().setDate(new Date().getDate() + 1)) : 
-    new Date();
+  return dateStr.toLowerCase() === 'tomorrow'
+    ? new Date(new Date().setDate(new Date().getDate() + 1))
+    : new Date();
 };
 
 const parseTime = (time: string): [number, number] => {
@@ -94,7 +105,7 @@ const parseTime = (time: string): [number, number] => {
   let hours = parseInt(hoursStr);
   const minutes = parseInt(minutesStr) || 0;
   const meridiem = time.includes('pm') ? 'PM' : 'AM';
-  
+
   if (meridiem === 'PM' && hours !== 12) {
     hours += 12;
   } else if (meridiem === 'AM' && hours === 12) {
