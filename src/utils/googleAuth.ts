@@ -1,4 +1,3 @@
-
 export const createOAuth2Client = (accessToken: string) => {
   // This function will now be used only in API routes
   if (typeof window === 'undefined') {
