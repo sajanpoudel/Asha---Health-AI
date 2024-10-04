@@ -19,13 +19,13 @@ def get_dataset_duration(wav_path):
     valid_count = 0
     invalid_files = []
     hidden_files = []
-    
+
     for file_name in os.listdir(wav_path):
         if file_name.lower().endswith('.wav'):
             if file_name.startswith('._'):
                 hidden_files.append(file_name)
                 continue
-            
+
             full_path = os.path.join(wav_path, file_name)
             if is_valid_wav(full_path):
                 try:
@@ -41,7 +41,7 @@ def get_dataset_duration(wav_path):
             else:
                 print(f"Invalid WAV file: {file_name}")
                 invalid_files.append(file_name)
-    
+
     duration_str = str(datetime.timedelta(seconds=round(totalduration, 0)))
     return valid_count, duration_str, invalid_files, hidden_files
 
