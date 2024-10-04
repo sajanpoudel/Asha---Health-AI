@@ -10,7 +10,8 @@ self.onmessage = (event) => {
 };
 
 function processAiChunk(chunk: string): string {
-  let processedChunk = chunk.replace(/\[.*?\]/g, '')
+  let processedChunk = chunk
+    .replace(/\[.*?\]/g, '')
     .replace(/•/g, 'Bullet point:')
     .replace(/\n/g, ' ');
 
