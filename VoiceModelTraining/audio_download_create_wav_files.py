@@ -37,7 +37,7 @@ def process_audio(input_file, output_folder, target_sample_rate, segment_duratio
         os.makedirs(output_folder)
 
     audio = AudioSegment.from_wav(input_file)
-    
+
     # Set sample rate
     audio = audio.set_frame_rate(target_sample_rate)
 
