@@ -9,7 +9,10 @@ import {
 } from '../src/utils/textUtils.ts';
 
 test('escapeHtml escapes every special character', () => {
-  assert.equal(escapeHtml(`<a href="x">Tom & 'Jerry'</a>`), '&lt;a href=&quot;x&quot;&gt;Tom &amp; &#039;Jerry&#039;&lt;/a&gt;');
+  assert.equal(
+    escapeHtml(`<a href="x">Tom & 'Jerry'</a>`),
+    '&lt;a href=&quot;x&quot;&gt;Tom &amp; &#039;Jerry&#039;&lt;/a&gt;'
+  );
 });
 
 test('decodeHtmlEntities reverses escapeHtml', () => {
