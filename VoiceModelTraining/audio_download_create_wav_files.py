@@ -1,11 +1,13 @@
 # Download a youtube video and convert it to wav files and split into 18 second segments
 
-import yt_dlp
 import os
 import subprocess
-from pydub import AudioSegment
+
 import librosa
 import soundfile as sf
+import yt_dlp
+from pydub import AudioSegment
+
 
 def download_youtube_audio(url, output_path):
     ydl_opts = {
