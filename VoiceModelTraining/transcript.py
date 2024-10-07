@@ -7,8 +7,8 @@ import whisper
 # Disable SSL certificate verification (use with caution)
 ssl._create_default_https_context = ssl._create_unverified_context
 
-WAV_FOLDER = 'wav'
-TRANSCRIPT_FILE = 'transcript.txt'
+WAV_FOLDER = "wav"
+TRANSCRIPT_FILE = "transcript.txt"
 
 
 def list_wav_files(wav_folder):
@@ -30,7 +30,7 @@ def main():
             print(f"Transcribing {wav_file}")
             try:
                 # Check if the file is a valid WAV file
-                with wave.open(os.path.join(WAV_FOLDER, wav_file), 'rb') as w:
+                with wave.open(os.path.join(WAV_FOLDER, wav_file), "rb") as w:
                     # If we can read the WAV file, it's valid
                     pass
 
@@ -38,7 +38,7 @@ def main():
                 result = model.transcribe(os.path.join(WAV_FOLDER, wav_file))
 
                 # Remove leading and trailing spaces from the transcribed text
-                transcribed_text = result['text'].strip()
+                transcribed_text = result["text"].strip()
 
                 # Write the result to the transcript file in the specified format
                 transcript_file.write(f"wavs/{wav_file}|{transcribed_text}\n")
