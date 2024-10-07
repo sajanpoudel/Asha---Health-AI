@@ -11,28 +11,35 @@ from pydub import AudioSegment
 
 def download_youtube_audio(url, output_path):
     ydl_opts = {
-        'format': 'bestaudio/best',
-        'outtmpl': output_path,
+        "format": "bestaudio/best",
+        "outtmpl": output_path,
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
         filename = ydl.prepare_filename(info)
     return filename
 
+
 def convert_to_wav(input_file, output_file):
     command = [
-        'ffmpeg',
-        '-i', input_file,
-        '-acodec', 'pcm_s16le',
-        '-ar', '22050',
-        '-ac', '1',
-        output_file
+        "ffmpeg",
+        "-i",
+        input_file,
+        "-acodec",
+        "pcm_s16le",
+        "-ar",
+        "22050",
+        "-ac",
+        "1",
+        output_file,
     ]
     subprocess.run(command, check=True)
 
+
 def ensure_valid_wav(file_path, target_sample_rate):
     x, _ = librosa.load(file_path, sr=target_sample_rate)
-    sf.write(file_path, x, target_sample_rate, subtype='PCM_16')
+    sf.write(file_path, x, target_sample_rate, subtype="PCM_16")
+
 
 def process_audio(input_file, output_folder, target_sample_rate, segment_duration):
     if not os.path.exists(output_folder):
@@ -49,14 +56,20 @@ def process_audio(input_file, output_folder, target_sample_rate, segment_duratio
     # Split the audio into segments
     segment_duration_ms = segment_duration * 1000  # Convert to milliseconds
     for i, start in enumerate(range(0, len(audio), segment_duration_ms)):
-        segment = audio[start:start+segment_duration_ms]
-        output_path = os.path.join(output_folder, f"{i+1}.wav")
+        segment = audio[start : start + segment_duration_ms]
+        output_path = os.path.join(output_folder, f"{i + 1}.wav")
         segment.export(output_path, format="wav", parameters=["-acodec", "pcm_s16le"])
         ensure_valid_wav(output_path, target_sample_rate)
 
     print(f"Audio processed and split into segments in the '{output_folder}' folder.")
 
-def main(youtube_url="YOUR_YOUTUBE_URL_HERE", output_folder="wav", target_sample_rate=22050, segment_duration=18):
+
+def main(
+    youtube_url="YOUR_YOUTUBE_URL_HERE",
+    output_folder="wav",
+    target_sample_rate=22050,
+    segment_duration=18,
+):
     """Download one video, convert it to WAV and split it into segments.
 
     target_sample_rate is 22050, or 16000 for some models. segment_duration is in seconds.
