@@ -12,12 +12,15 @@ def convert_to_wav(input_file, output_file):
     except Exception as e:
         print(f"Error converting {input_file}: {str(e)}")
 
+
 def rename_and_convert_wav_files(folder_path):
     # Get all files in the folder
     all_files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
 
     # Sort the files based on their current numeric names
-    all_files.sort(key=lambda x: int(os.path.splitext(x)[0]) if x.split('.')[0].isdigit() else float('inf'))
+    all_files.sort(
+        key=lambda x: int(os.path.splitext(x)[0]) if x.split(".")[0].isdigit() else float("inf")
+    )
 
     # Rename and convert files
     for index, filename in enumerate(all_files, start=1):
@@ -34,7 +37,8 @@ def rename_and_convert_wav_files(folder_path):
 
         print(f"Processed: {filename} -> {new_filename}")
 
-def main(wav_folder='wav'):
+
+def main(wav_folder="wav"):
     rename_and_convert_wav_files(wav_folder)
     print("File processing complete.")
 
