@@ -15,6 +15,7 @@ def is_valid_wav(file_path):
     except (wave.Error, EOFError, OSError):
         return False
 
+
 def get_dataset_duration(wav_path):
     totalduration = 0
     valid_count = 0
@@ -22,8 +23,8 @@ def get_dataset_duration(wav_path):
     hidden_files = []
 
     for file_name in os.listdir(wav_path):
-        if file_name.lower().endswith('.wav'):
-            if file_name.startswith('._'):
+        if file_name.lower().endswith(".wav"):
+            if file_name.startswith("._"):
                 hidden_files.append(file_name)
                 continue
 
@@ -46,15 +47,17 @@ def get_dataset_duration(wav_path):
     duration_str = str(datetime.timedelta(seconds=round(totalduration, 0)))
     return valid_count, duration_str, invalid_files, hidden_files
 
+
 def zip_wav_files(wav_path, zip_path):
-    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, _, files in os.walk(wav_path):
             for file in files:
-                if file.lower().endswith('.wav') and not file.startswith('._'):
+                if file.lower().endswith(".wav") and not file.startswith("._"):
                     file_path = os.path.join(root, file)
                     arcname = os.path.relpath(file_path, wav_path)
                     zipf.write(file_path, arcname)
     print(f"WAV files zipped to {zip_path}")
+
 
 def main():
     # Usage
@@ -77,14 +80,20 @@ def main():
 
     print("\nRecommendations:")
     if hidden_files:
-        print("1. Remove the hidden macOS files (starting with '._') as they are not actual WAV files.")
+        print(
+            "1. Remove the hidden macOS files (starting with '._') as they are not actual WAV files."
+        )
     if invalid_files:
-        print("2. Check and correct the invalid WAV files to ensure they are mono, 16-bit, and either 16000 or 22050 Hz.")
+        print(
+            "2. Check and correct the invalid WAV files to ensure they are mono, 16-bit, and either 16000 or 22050 Hz."
+        )
     print("3. After cleaning up the files, run this script again to verify the dataset.")
 
     # Optional: Remove hidden files
-    should_remove = input("\nDo you want to remove the hidden macOS files? (yes/no): ").lower().strip()
-    if should_remove == 'yes':
+    should_remove = (
+        input("\nDo you want to remove the hidden macOS files? (yes/no): ").lower().strip()
+    )
+    if should_remove == "yes":
         removed_count = 0
         for file in hidden_files:
             try:
