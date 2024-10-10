@@ -66,4 +66,9 @@ describe('MessageInput', () => {
     render(<MessageInput {...baseProps()} />);
     expect(buttons()[2]).toBeDisabled();
   });
+
+  it('enables the send button once there is text', () => {
+    render(<MessageInput {...baseProps()} inputMessage="Hello" />);
+    expect(buttons()[2]).toBeEnabled();
+  });
 });
