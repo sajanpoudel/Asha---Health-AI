@@ -71,4 +71,9 @@ describe('MessageInput', () => {
     render(<MessageInput {...baseProps()} inputMessage="Hello" />);
     expect(buttons()[2]).toBeEnabled();
   });
+
+  it('keeps the send button enabled while listening', () => {
+    render(<MessageInput {...baseProps()} isListening />);
+    expect(buttons()[2]).toBeEnabled();
+  });
 });
