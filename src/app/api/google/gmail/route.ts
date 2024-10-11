@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 
+/** POST /api/google/gmail */
 export async function POST(request: Request) {
   const { accessToken, query } = await request.json();
 
