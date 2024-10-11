@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { createOAuth2Client } from '@/utils/googleAuth';
 
+/** POST /api/google/calendar */
 export async function POST(request: Request) {
   try {
     const { accessToken, dateTime, timeZone } = await request.json();
