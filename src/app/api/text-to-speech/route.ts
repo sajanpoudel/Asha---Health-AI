@@ -12,6 +12,7 @@ const MODEL_PATH =
   process.env.PIPER_MODEL_PATH ||
   path.join(process.cwd(), 'piper', 'models', 'en_US-libritts-high.onnx');
 
+/** POST /api/text-to-speech */
 export async function POST(request: Request) {
   const { text } = await request.json();
 
