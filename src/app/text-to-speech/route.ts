@@ -16,6 +16,7 @@ const emotionMap: { [key: string]: string } = {
   warm: '--emotion Neutral --speaker_id 6',
 };
 
+/** POST /text-to-speech */
 export async function POST(request: Request) {
   const { text, emotion, voiceStyle } = await request.json();
 
