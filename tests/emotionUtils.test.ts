@@ -18,3 +18,7 @@ function withRandom<T>(value: number, fn: () => T): T {
     Math.random = original;
   }
 }
+
+test('analyzeEmotion detects affectionate text', () => {
+  assert.equal(analyzeEmotion('I love spending time with you'), 'affectionate');
+});
