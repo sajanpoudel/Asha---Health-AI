@@ -30,3 +30,7 @@ test('analyzeEmotion detects joyful text', () => {
 test('analyzeEmotion detects sad text', () => {
   assert.equal(analyzeEmotion('I feel sad and down'), 'sad');
 });
+
+test('analyzeEmotion detects anxious text', () => {
+  assert.equal(analyzeEmotion('I am worried about my results'), 'anxious');
+});
