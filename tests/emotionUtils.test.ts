@@ -54,3 +54,7 @@ test('analyzeEmotion defaults to warm', () => {
 test('analyzeEmotion ignores case', () => {
   assert.equal(analyzeEmotion('I AM SO HAPPY'), 'joyful');
 });
+
+test('analyzeEmotion returns the first matching emotion', () => {
+  assert.equal(analyzeEmotion('I love you but I am worried'), 'affectionate');
+});
