@@ -50,3 +50,7 @@ test('analyzeEmotion detects warm text', () => {
 test('analyzeEmotion defaults to warm', () => {
   assert.equal(analyzeEmotion('Tell me about the weather'), 'warm');
 });
+
+test('analyzeEmotion ignores case', () => {
+  assert.equal(analyzeEmotion('I AM SO HAPPY'), 'joyful');
+});
