@@ -46,3 +46,7 @@ test('analyzeEmotion detects playful text', () => {
 test('analyzeEmotion detects warm text', () => {
   assert.equal(analyzeEmotion('What a nice cozy evening'), 'warm');
 });
+
+test('analyzeEmotion defaults to warm', () => {
+  assert.equal(analyzeEmotion('Tell me about the weather'), 'warm');
+});
