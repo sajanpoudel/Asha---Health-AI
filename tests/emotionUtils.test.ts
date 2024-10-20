@@ -58,3 +58,9 @@ test('analyzeEmotion ignores case', () => {
 test('analyzeEmotion returns the first matching emotion', () => {
   assert.equal(analyzeEmotion('I love you but I am worried'), 'affectionate');
 });
+
+test('addEmotionalNuance always cues the first sentence', () => {
+  const result = withRandom(0.99, () => addEmotionalNuance('Hello there. How are you', 'joyful'));
+  assert.ok(result.startsWith('[') && result.includes('] Hello there'));
+  assert.ok(!result.includes('] How are you'));
+});
