@@ -69,3 +69,8 @@ test('addEmotionalNuance cues later sentences when the dice allow it', () => {
   const result = withRandom(0.0, () => addEmotionalNuance('One. Two', 'sad'));
   assert.equal(result.match(/\[/g)?.length, 2);
 });
+
+test('addEmotionalNuance uses the cues of the requested emotion', () => {
+  const result = withRandom(0.0, () => addEmotionalNuance('Hello', 'playful'));
+  assert.ok(result.startsWith('[teasingly]'));
+});
