@@ -76,4 +76,11 @@ describe('MessageInput', () => {
     render(<MessageInput {...baseProps()} isListening />);
     expect(buttons()[2]).toBeEnabled();
   });
+
+  it('sends the message with the send button', () => {
+    const props = baseProps();
+    render(<MessageInput {...props} inputMessage="Hello" />);
+    fireEvent.click(buttons()[2]);
+    expect(props.handleSendMessage).toHaveBeenCalledTimes(1);
+  });
 });
