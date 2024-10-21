@@ -64,3 +64,8 @@ test('addEmotionalNuance always cues the first sentence', () => {
   assert.ok(result.startsWith('[') && result.includes('] Hello there'));
   assert.ok(!result.includes('] How are you'));
 });
+
+test('addEmotionalNuance cues later sentences when the dice allow it', () => {
+  const result = withRandom(0.0, () => addEmotionalNuance('One. Two', 'sad'));
+  assert.equal(result.match(/\[/g)?.length, 2);
+});
