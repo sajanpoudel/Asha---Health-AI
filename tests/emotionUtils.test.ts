@@ -74,3 +74,8 @@ test('addEmotionalNuance uses the cues of the requested emotion', () => {
   const result = withRandom(0.0, () => addEmotionalNuance('Hello', 'playful'));
   assert.ok(result.startsWith('[teasingly]'));
 });
+
+test('addEmotionalNuance falls back to the warm cues for unknown emotions', () => {
+  const result = withRandom(0.0, () => addEmotionalNuance('Hello', 'confused'));
+  assert.ok(result.startsWith('[warmly]'));
+});
