@@ -79,3 +79,7 @@ test('addEmotionalNuance falls back to the warm cues for unknown emotions', () =
   const result = withRandom(0.0, () => addEmotionalNuance('Hello', 'confused'));
   assert.ok(result.startsWith('[warmly]'));
 });
+
+test('addPersonalTouch prefixes a pet name when the dice allow it', () => {
+  assert.equal(withRandom(0.0, () => addPersonalTouch('Rest well.')), 'Sweetheart, Rest well.');
+});
