@@ -83,3 +83,7 @@ test('addEmotionalNuance falls back to the warm cues for unknown emotions', () =
 test('addPersonalTouch prefixes a pet name when the dice allow it', () => {
   assert.equal(withRandom(0.0, () => addPersonalTouch('Rest well.')), 'Sweetheart, Rest well.');
 });
+
+test('addPersonalTouch leaves the text alone otherwise', () => {
+  assert.equal(withRandom(0.9, () => addPersonalTouch('Rest well.')), 'Rest well.');
+});
