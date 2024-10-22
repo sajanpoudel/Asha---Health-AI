@@ -92,3 +92,7 @@ test('addSupportiveLanguage prefixes a supportive phrase most of the time', () =
   const result = withRandom(0.0, () => addSupportiveLanguage('Take a deep breath.'));
   assert.equal(result, "I'm here for you, always. Take a deep breath.");
 });
+
+test('addSupportiveLanguage can leave the text unchanged', () => {
+  assert.equal(withRandom(0.99, () => addSupportiveLanguage('Take a deep breath.')), 'Take a deep breath.');
+});
