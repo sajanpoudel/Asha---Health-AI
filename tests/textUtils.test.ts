@@ -6,6 +6,8 @@ import {
   escapeHtml,
   stripHtmlAndFormatting,
   simplifyText,
+  addNaturalPauses,
+  formatAiResponse,
 } from '../src/utils/textUtils.ts';
 
 test('escapeHtml escapes every special character', () => {
