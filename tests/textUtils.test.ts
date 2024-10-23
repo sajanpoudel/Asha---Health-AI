@@ -38,3 +38,7 @@ test('simplifyText swaps complex words for simple ones', () => {
 test('simplifyText adds pause markers', () => {
   assert.match(simplifyText('Drink water, rest well.'), /<break time="\d+ms"\/>/);
 });
+
+test('decodeHtmlEntities decodes numeric apostrophes and spaces', () => {
+  assert.equal(decodeHtmlEntities("it&#039;s&nbsp;fine"), "it's fine");
+});
