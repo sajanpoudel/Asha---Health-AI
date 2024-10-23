@@ -46,3 +46,7 @@ test('decodeHtmlEntities decodes numeric apostrophes and spaces', () => {
 test('escapeHtml leaves plain text untouched', () => {
   assert.equal(escapeHtml('Plain text 123'), 'Plain text 123');
 });
+
+test('stripHtmlAndFormatting decodes entities after removing tags', () => {
+  assert.equal(stripHtmlAndFormatting('<b>Tom &amp; Jerry</b>'), 'Tom & Jerry');
+});
