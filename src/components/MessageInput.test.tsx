@@ -83,4 +83,9 @@ describe('MessageInput', () => {
     fireEvent.click(buttons()[2]);
     expect(props.handleSendMessage).toHaveBeenCalledTimes(1);
   });
+
+  it('disables the speaker button for an empty chat', () => {
+    render(<MessageInput {...baseProps()} />);
+    expect(buttons()[1]).toBeDisabled();
+  });
 });
