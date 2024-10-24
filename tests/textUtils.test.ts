@@ -59,3 +59,8 @@ test('addNaturalPauses adds a pause after every sentence', () => {
 test('addNaturalPauses adds short pauses after commas', () => {
   assert.match(addNaturalPauses('Eat, sleep, repeat.'), /, <break time="200ms"\/>/);
 });
+
+test('simplifyText turns list items into pauses', () => {
+  const result = simplifyText('1. Drink water');
+  assert.ok(result.includes('Drink water <break time="500ms"/>'));
+});
