@@ -55,3 +55,7 @@ test('addNaturalPauses adds a pause after every sentence', () => {
   const result = addNaturalPauses('Drink water. Rest well.');
   assert.equal(result.match(/<break time="400ms"\/>/g)?.length, 2);
 });
+
+test('addNaturalPauses adds short pauses after commas', () => {
+  assert.match(addNaturalPauses('Eat, sleep, repeat.'), /, <break time="200ms"\/>/);
+});
