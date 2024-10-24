@@ -50,3 +50,8 @@ test('escapeHtml leaves plain text untouched', () => {
 test('stripHtmlAndFormatting decodes entities after removing tags', () => {
   assert.equal(stripHtmlAndFormatting('<b>Tom &amp; Jerry</b>'), 'Tom & Jerry');
 });
+
+test('addNaturalPauses adds a pause after every sentence', () => {
+  const result = addNaturalPauses('Drink water. Rest well.');
+  assert.equal(result.match(/<break time="400ms"\/>/g)?.length, 2);
+});
