@@ -571,6 +571,14 @@ const useHealthAssistant = () => {
     return text;
   };
 
+  const toggleVoiceListening = (enabled: boolean) => {
+    if (enabled) {
+      startListening();
+    } else {
+      stopListening();
+    }
+  };
+
   return {
     messages,
     chatHistory,
@@ -625,7 +633,8 @@ const useHealthAssistant = () => {
     handleSendMessage,
     speakText,
     processQuery,
-    accessToken
+    accessToken,
+    toggleVoiceListening
   };
 };
 

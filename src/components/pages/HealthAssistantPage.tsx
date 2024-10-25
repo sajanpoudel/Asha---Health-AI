@@ -11,6 +11,7 @@ import ChatHistorySection from '../ChatHistorySection';
 import '@/types';
 import { motion } from "framer-motion";
 import { useRouter } from 'next/navigation';
+import UserProfilePage from './UserProfilePage';
 
 interface HealthAssistantPageProps {
   personalData: {
@@ -44,18 +45,26 @@ const HealthAssistantPage: React.FC<HealthAssistantPageProps> = ({ personalData 
     startListening,
     speakText,
     recognitionError,
-    accessToken
+    accessToken,
+    processQuery
   } = useHealthAssistant();
 
   const [activeTab, setActiveTab] = useState('chat');
   const router = useRouter();
 
+  const [isVoiceListeningEnabled, setIsVoiceListeningEnabled] = useState(true);
+
   const handleTabChange = (tab: string) => {
     if (tab === 'profile') {
+      toggleVoiceListening(false);
       router.push('/profile');
     } else if (tab === 'questionnaire') {
+      toggleVoiceListening(false);
       router.push('/questionnaire');
     } else {
+      if (tab === 'chat') {
+        toggleVoiceListening(true);
+      }
       setActiveTab(tab);
     }
   };
@@ -69,6 +78,14 @@ const HealthAssistantPage: React.FC<HealthAssistantPageProps> = ({ personalData 
     }
   }, [isDarkMode]);
 
+  const toggleVoiceListening = (enabled: boolean) => {
+    setIsVoiceListeningEnabled(enabled);
+    // If you have a function to stop listening, call it here when disabled
+    if (!enabled && isListening) {
+      // stopListening(); // Uncomment and implement this if you have such a function
+    }
+  };
+
   const renderMainContent = () => {
     switch (activeTab) {
       case 'chat':
@@ -81,20 +98,22 @@ const HealthAssistantPage: React.FC<HealthAssistantPageProps> = ({ personalData 
             <MessageInput
               inputMessage={inputMessage}
               setInputMessage={setInputMessage}
-              isListening={isListening}
+              isListening={isListening && isVoiceListeningEnabled}
               isSpeaking={isSpeaking}
               isWaitingForWakeWord={isWaitingForWakeWord}
               transcript={transcript}
               isDarkMode={isDarkMode}
               voiceIconAnimation={voiceIconAnimation}
               handleSendMessage={handleSendMessage}
-              startListening={startListening}
+              startListening={isVoiceListeningEnabled ? startListening : () => {}}
               speakText={speakText}
               getCurrentChat={getCurrentChat}
               isProcessing={isListening || isGeneratingResponse}
             />
           </>
         );
+      case 'profile':
+        return <UserProfilePage toggleVoiceListening={toggleVoiceListening} />;
       case 'history':
         return <ChatHistorySection chats={chats} switchChat={switchChat} setActiveTab={setActiveTab} />;
       case 'records':
@@ -103,6 +122,16 @@ const HealthAssistantPage: React.FC<HealthAssistantPageProps> = ({ personalData 
         return <div>Unknown Section</div>;
     }
   };
+
+  useEffect(() => {
+    if (transcript && !isWaitingForWakeWord && !isGeneratingResponse) {
+      const timer = setTimeout(() => {
+        processQuery(transcript);
+      }, 3000); // Process after 3 seconds of silence
+
+      return () => clearTimeout(timer);
+    }
+  }, [transcript, isWaitingForWakeWord, isGeneratingResponse, processQuery]);
 
   return (
     <div className="flex h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-sans relative overflow-hidden">
