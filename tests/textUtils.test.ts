@@ -72,3 +72,7 @@ test('simplifyText strips tags before simplifying', () => {
 test('formatAiResponse removes emotional cues in em tags', () => {
   assert.ok(!formatAiResponse('<em>smiling</em> Hello').includes('smiling'));
 });
+
+test('formatAiResponse turns newlines into line breaks', () => {
+  assert.ok(formatAiResponse('a\nb').includes('br'));
+});
