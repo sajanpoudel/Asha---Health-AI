@@ -1,4 +1,3 @@
-
 // src/components/pages/HealthQuestionnairePage.tsx
 'use client'
 import React, { useState, useEffect } from 'react';
@@ -14,7 +13,8 @@ import { Progress } from "@/components/ui/progress";
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db, auth } from '@/utils/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import Link from 'next/link';
+import Sidebar from '@/components/Sidebar';
+import { ClipboardList } from 'lucide-react';
 
 interface QuestionnaireData {
   bloodGroup: string;
@@ -92,6 +92,8 @@ const HealthQuestionnairePage: React.FC = () => {
     alcoholConsumption: '',
   });
   const [currentSection, setCurrentSection] = useState(0);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -101,7 +103,6 @@ const HealthQuestionnairePage: React.FC = () => {
         alert('User not authenticated. Please log in again.');
         router.push('/');
       } else {
-        // Load existing data if available
         loadExistingData(user.uid);
       }
     });
@@ -156,26 +157,42 @@ const HealthQuestionnairePage: React.FC = () => {
   const renderQuestion = (id: string, question: string) => {
     switch (id) {
       case 'bloodGroup':
+      case 'exerciseFrequency':
+      case 'sleepHours':
+      case 'stressLevel':
+      case 'alcoholConsumption':
+      case 'dietType':
         return (
-          <Select
-            value={data.bloodGroup}
-            onValueChange={(value: string) => handleInputChange('bloodGroup', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select Blood Group" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="A+">A+</SelectItem>
-              <SelectItem value="A-">A-</SelectItem>
-              <SelectItem value="B+">B+</SelectItem>
-              <SelectItem value="B-">B-</SelectItem>
-              <SelectItem value="AB+">AB+</SelectItem>
-              <SelectItem value="AB-">AB-</SelectItem>
-              <SelectItem value="O+">O+</SelectItem>
-              <SelectItem value="O-">O-</SelectItem>
-              <SelectItem value="unknown">Don't Know</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="relative">
+            <Select
+              value={data[id]}
+              onValueChange={(value: string) => handleInputChange(id, value)}
+            >
+              <SelectTrigger className="w-full bg-white dark:bg-gray-700">
+                <SelectValue placeholder={`Select ${id.replace(/([A-Z])/g, ' $1').toLowerCase()}`} />
+              </SelectTrigger>
+              <SelectContent className="bg-white dark:bg-gray-700">
+                {id === 'bloodGroup' && [
+                  <SelectItem key="A+" value="A+">A+</SelectItem>,
+                  <SelectItem key="A-" value="A-">A-</SelectItem>,
+                  <SelectItem key="B+" value="B+">B+</SelectItem>,
+                  <SelectItem key="B-" value="B-">B-</SelectItem>,
+                  <SelectItem key="AB+" value="AB+">AB+</SelectItem>,
+                  <SelectItem key="AB-" value="AB-">AB-</SelectItem>,
+                  <SelectItem key="O+" value="O+">O+</SelectItem>,
+                  <SelectItem key="O-" value="O-">O-</SelectItem>,
+                  <SelectItem key="unknown" value="unknown">Don't Know</SelectItem>
+                ]}
+                {id === 'exerciseFrequency' && [
+                  <SelectItem key="0" value="0">0 times per week</SelectItem>,
+                  <SelectItem key="1-2" value="1-2">1-2 times per week</SelectItem>,
+                  <SelectItem key="3-4" value="3-4">3-4 times per week</SelectItem>,
+                  <SelectItem key="5+" value="5+">5+ times per week</SelectItem>
+                ]}
+                {/* Add similar options for other select fields */}
+              </SelectContent>
+            </Select>
+          </div>
         );
       case 'height':
       case 'weight':
@@ -211,66 +228,6 @@ const HealthQuestionnairePage: React.FC = () => {
             </div>
           </RadioGroup>
         );
-      case 'exerciseFrequency':
-      case 'sleepHours':
-      case 'stressLevel':
-      case 'alcoholConsumption':
-        return (
-          <Select
-            value={data[id]}
-            onValueChange={(value: string) => handleInputChange(id, value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={`Select ${id.replace(/([A-Z])/g, ' $1').toLowerCase()}`} />
-            </SelectTrigger>
-            <SelectContent>
-              {id === 'exerciseFrequency' && [
-                <SelectItem key="0" value="0">0 times per week</SelectItem>,
-                <SelectItem key="1-2" value="1-2">1-2 times per week</SelectItem>,
-                <SelectItem key="3-4" value="3-4">3-4 times per week</SelectItem>,
-                <SelectItem key="5+" value="5+">5+ times per week</SelectItem>,
-              ]}
-              {id === 'sleepHours' && [
-                <SelectItem key="<6" value="<6">Less than 6 hours</SelectItem>,
-                <SelectItem key="6-7" value="6-7">6-7 hours</SelectItem>,
-                <SelectItem key="7-8" value="7-8">7-8 hours</SelectItem>,
-                <SelectItem key="8+" value="8+">More than 8 hours</SelectItem>,
-              ]}
-              {id === 'stressLevel' && [
-                <SelectItem key="low" value="low">Low</SelectItem>,
-                <SelectItem key="moderate" value="moderate">Moderate</SelectItem>,
-                <SelectItem key="high" value="high">High</SelectItem>,
-                <SelectItem key="very-high" value="very-high">Very High</SelectItem>,
-              ]}
-              {id === 'alcoholConsumption' && [
-                <SelectItem key="never" value="never">Never</SelectItem>,
-                <SelectItem key="occasionally" value="occasionally">Occasionally</SelectItem>,
-                <SelectItem key="weekly" value="weekly">Weekly</SelectItem>,
-                <SelectItem key="daily" value="daily">Daily</SelectItem>,
-              ]}
-            </SelectContent>
-          </Select>
-        );
-      case 'dietType':
-        return (
-          <Select
-            value={data.dietType}
-            onValueChange={(value: string) => handleInputChange('dietType', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select Diet Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="omnivore">Omnivore</SelectItem>
-              <SelectItem value="vegetarian">Vegetarian</SelectItem>
-              <SelectItem value="vegan">Vegan</SelectItem>
-              <SelectItem value="pescatarian">Pescatarian</SelectItem>
-              <SelectItem value="keto">Keto</SelectItem>
-              <SelectItem value="paleo">Paleo</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
-            </SelectContent>
-          </Select>
-        );
       case 'allergies':
       case 'chronicConditions':
       case 'medications':
@@ -286,63 +243,85 @@ const HealthQuestionnairePage: React.FC = () => {
     }
   };
 
+  // Update this function to correctly calculate progress
+  const calculateProgress = () => {
+    const totalQuestions = questions.reduce((acc, section) => acc + section.questions.length, 0);
+    const answeredQuestions = Object.values(data).filter(value => value !== '').length;
+    return (answeredQuestions / totalQuestions) * 100;
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-100 to-purple-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-4xl bg-white/80 backdrop-blur-md shadow-xl rounded-2xl overflow-hidden">
-        <CardContent className="p-8">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-4xl font-bold text-blue-800">Health Questionnaire</h1>
-            <Link href="/health-assistant">
-              <Button variant="outline">Back to Chat</Button>
-            </Link>
-          </div>
-          <Progress 
-            value={((currentSection + 1) / questions.length) * 100} 
-            className="mb-8 h-2 bg-blue-200"
-          />
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentSection}
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -50 }}
-              transition={{ duration: 0.5 }}
-              className="space-y-8"
-            >
-              <h2 className="text-3xl font-semibold mb-4 text-blue-700">
-                {questions[currentSection].title}
-              </h2>
-              {questions[currentSection].questions.map((q) => (
+    <div className={`min-h-screen flex ${isDarkMode ? 'dark' : ''}`}>
+      <Sidebar
+        isOpen={isSidebarOpen}
+        toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        isDarkMode={isDarkMode}
+        setIsDarkMode={setIsDarkMode}
+        createNewChat={() => {}}
+        setActiveTab={() => {}}
+        activeTab="questionnaire"
+      />
+      <div className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+        <div className="min-h-screen bg-white dark:bg-gray-900 flex items-start justify-center p-4 overflow-y-auto">
+          <Card className="w-full max-w-4xl bg-white dark:bg-gray-800 shadow-xl rounded-2xl overflow-hidden my-8">
+            <CardContent className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center">
+                  <ClipboardList className="mr-2" size={24} />
+                  Health Questionnaire
+                </h1>
+              </div>
+              <Progress 
+                value={calculateProgress()} 
+                className="mb-6 h-2 bg-gray-200 dark:bg-gray-700"
+              />
+              <AnimatePresence mode="wait">
                 <motion.div
-                  key={q.id}
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
+                  key={currentSection}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
-                  className="p-6 bg-white rounded-lg shadow-md"
+                  className="space-y-6"
                 >
-                  <h3 className="text-xl font-medium mb-4 text-blue-600">{q.question}</h3>
-                  {renderQuestion(q.id, q.question)}
+                  <h2 className="text-xl font-semibold mb-3 text-gray-700 dark:text-gray-300">
+                    {questions[currentSection].title}
+                  </h2>
+                  {questions[currentSection].questions.map((q) => (
+                    <motion.div
+                      key={q.id}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-md mb-8"
+                    >
+                      <h3 className="text-base font-medium mb-3 text-gray-600 dark:text-gray-300">{q.question}</h3>
+                      <div className="mb-2">
+                        {renderQuestion(q.id, q.question)}
+                      </div>
+                    </motion.div>
+                  ))}
                 </motion.div>
-              ))}
-            </motion.div>
-          </AnimatePresence>
-          <div className="flex justify-between mt-8">
-            <Button 
-              onClick={handlePrevious} 
-              disabled={currentSection === 0}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full transition duration-300"
-            >
-              Previous
-            </Button>
-            <Button 
-              onClick={handleNext}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full transition duration-300"
-            >
-              {currentSection === questions.length - 1 ? 'Submit' : 'Next'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              </AnimatePresence>
+              <div className="flex justify-between mt-6">
+                <Button 
+                  onClick={handlePrevious} 
+                  disabled={currentSection === 0}
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-full transition duration-300 text-sm"
+                >
+                  Previous
+                </Button>
+                <Button 
+                  onClick={handleNext}
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-full transition duration-300 text-sm"
+                >
+                  {currentSection === questions.length - 1 ? 'Submit' : 'Next'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

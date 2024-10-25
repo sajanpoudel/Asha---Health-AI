@@ -30,6 +30,11 @@ const Sidebar: React.FC<SidebarProps> = ({
     closed: { x: -256, width: 0 },
   };
 
+  const handleNavigation = (path: string, tab: string) => {
+    setActiveTab(tab);
+    router.push(path);
+  };
+
   return (
     <motion.div
       className={`fixed top-0 left-0 h-full bg-gray-900 text-white shadow-lg z-50 overflow-hidden ${isDarkMode ? 'dark' : ''}`}
@@ -59,7 +64,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <SidebarItem 
               icon={<MessageSquare size={20} />} 
               text="AI Chat" 
-              onClick={() => setActiveTab('chat')} 
+              onClick={() => handleNavigation('/health-assistant', 'chat')} 
               active={activeTab === 'chat'}
               className="flex-grow mr-2"
             />
@@ -75,13 +80,13 @@ const Sidebar: React.FC<SidebarProps> = ({
           <SidebarItem 
             icon={<User size={20} />} 
             text="Profile" 
-            onClick={() => router.push('/profile')}
+            onClick={() => handleNavigation('/profile', 'profile')}
             active={activeTab === 'profile'}
           />
           <SidebarItem 
             icon={<ClipboardList size={20} />} 
             text="Health Questionnaire" 
-            onClick={() => router.push('/questionnaire')}
+            onClick={() => handleNavigation('/questionnaire', 'questionnaire')}
             active={activeTab === 'questionnaire'}
           />
           <SidebarItem 
@@ -93,7 +98,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <SidebarItem 
             icon={<FileText size={20} />} 
             text="Medical Records" 
-            onClick={() => setActiveTab('records')}
+            onClick={() => handleNavigation('/medical-records', 'records')}
             active={activeTab === 'records'}
           />
         </nav>
