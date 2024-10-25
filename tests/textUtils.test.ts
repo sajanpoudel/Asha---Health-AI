@@ -64,3 +64,7 @@ test('simplifyText turns list items into pauses', () => {
   const result = simplifyText('1. Drink water');
   assert.ok(result.includes('Drink water <break time="500ms"/>'));
 });
+
+test('simplifyText strips tags before simplifying', () => {
+  assert.ok(!simplifyText('<p>Please utilize this</p>').includes('<p>'));
+});
