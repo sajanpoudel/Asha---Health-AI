@@ -68,3 +68,7 @@ test('simplifyText turns list items into pauses', () => {
 test('simplifyText strips tags before simplifying', () => {
   assert.ok(!simplifyText('<p>Please utilize this</p>').includes('<p>'));
 });
+
+test('formatAiResponse removes emotional cues in em tags', () => {
+  assert.ok(!formatAiResponse('<em>smiling</em> Hello').includes('smiling'));
+});
