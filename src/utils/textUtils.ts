@@ -72,7 +72,7 @@ export const simplifyText = (text: string): string => {
 };
 
 export const addNaturalPauses = (text: string): string => {
-  const sentences = text.split(/(?<=[.!?])(\s|$)/);
+  const sentences = text.split(/(?<=[.!?])\s+/);
   return sentences
     .map((sentence) => {
       // Split the sentence into clauses
