@@ -98,4 +98,11 @@ describe('MessageInput', () => {
     fireEvent.click(buttons()[1]);
     expect(props.speakText).toHaveBeenCalledWith('Drink water');
   });
+
+  it('does not read the user message aloud', () => {
+    const props = baseProps([{ type: 'user', content: 'Hi' }]);
+    render(<MessageInput {...props} />);
+    fireEvent.click(buttons()[1]);
+    expect(props.speakText).not.toHaveBeenCalled();
+  });
 });
