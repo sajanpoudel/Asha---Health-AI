@@ -88,4 +88,14 @@ describe('MessageInput', () => {
     render(<MessageInput {...baseProps()} />);
     expect(buttons()[1]).toBeDisabled();
   });
+
+  it('reads the last answer aloud', () => {
+    const props = baseProps([
+      { type: 'user', content: 'Hi' },
+      { type: 'ai', content: 'Drink water' },
+    ]);
+    render(<MessageInput {...props} />);
+    fireEvent.click(buttons()[1]);
+    expect(props.speakText).toHaveBeenCalledWith('Drink water');
+  });
 });
