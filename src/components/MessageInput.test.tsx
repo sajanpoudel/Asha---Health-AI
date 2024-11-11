@@ -105,4 +105,9 @@ describe('MessageInput', () => {
     fireEvent.click(buttons()[1]);
     expect(props.speakText).not.toHaveBeenCalled();
   });
+
+  it('shows the pulse overlay while listening', () => {
+    const { container } = render(<MessageInput {...baseProps()} isListening />);
+    expect(container.querySelector('.from-blue-400\\/20')).not.toBeNull();
+  });
 });
