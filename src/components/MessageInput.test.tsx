@@ -110,4 +110,9 @@ describe('MessageInput', () => {
     const { container } = render(<MessageInput {...baseProps()} isListening />);
     expect(container.querySelector('.from-blue-400\\/20')).not.toBeNull();
   });
+
+  it('shows the green overlay while speaking', () => {
+    const { container } = render(<MessageInput {...baseProps()} isSpeaking />);
+    expect(container.querySelector('.from-green-400\\/20')).not.toBeNull();
+  });
 });
