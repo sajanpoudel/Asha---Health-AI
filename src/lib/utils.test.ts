@@ -13,4 +13,8 @@ describe('cn', () => {
   it('accepts conditional objects', () => {
     expect(cn('a', { b: true, c: false })).toBe('a b');
   });
+
+  it('lets the last tailwind class win', () => {
+    expect(cn('p-2', 'p-4')).toBe('p-4');
+  });
 });
