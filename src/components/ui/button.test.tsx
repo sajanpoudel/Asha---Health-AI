@@ -21,4 +21,9 @@ describe('Button', () => {
     fireEvent.click(screen.getByRole('button'));
     expect(onClick).not.toHaveBeenCalled();
   });
+
+  it('uses the default variant and size', () => {
+    render(<Button>Go</Button>);
+    expect(screen.getByRole('button')).toHaveClass('bg-primary', 'h-10', 'px-4');
+  });
 });
