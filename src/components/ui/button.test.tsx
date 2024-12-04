@@ -26,4 +26,9 @@ describe('Button', () => {
     render(<Button>Go</Button>);
     expect(screen.getByRole('button')).toHaveClass('bg-primary', 'h-10', 'px-4');
   });
+
+  it('supports the destructive variant', () => {
+    render(<Button variant="destructive">Delete</Button>);
+    expect(screen.getByRole('button')).toHaveClass('bg-destructive');
+  });
 });
