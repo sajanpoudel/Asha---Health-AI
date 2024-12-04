@@ -31,4 +31,9 @@ describe('Button', () => {
     render(<Button variant="destructive">Delete</Button>);
     expect(screen.getByRole('button')).toHaveClass('bg-destructive');
   });
+
+  it('supports the outline variant', () => {
+    render(<Button variant="outline">Outline</Button>);
+    expect(screen.getByRole('button')).toHaveClass('border', 'border-input');
+  });
 });
