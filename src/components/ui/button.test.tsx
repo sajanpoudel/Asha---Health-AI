@@ -36,4 +36,10 @@ describe('Button', () => {
     render(<Button variant="outline">Outline</Button>);
     expect(screen.getByRole('button')).toHaveClass('border', 'border-input');
   });
+
+  it('supports the ghost and link variants', () => {
+    render(<><Button variant="ghost">Ghost</Button><Button variant="link">Link</Button></>);
+    expect(screen.getByText('Link')).toHaveClass('underline-offset-4');
+    expect(screen.getByText('Ghost')).not.toHaveClass('bg-primary');
+  });
 });
