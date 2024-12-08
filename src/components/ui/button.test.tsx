@@ -42,4 +42,11 @@ describe('Button', () => {
     expect(screen.getByText('Link')).toHaveClass('underline-offset-4');
     expect(screen.getByText('Ghost')).not.toHaveClass('bg-primary');
   });
+
+  it('supports the small, large and icon sizes', () => {
+    render(<><Button size="sm">S</Button><Button size="lg">L</Button><Button size="icon">I</Button></>);
+    expect(screen.getByText('S')).toHaveClass('h-9');
+    expect(screen.getByText('L')).toHaveClass('h-11');
+    expect(screen.getByText('I')).toHaveClass('w-10');
+  });
 });
