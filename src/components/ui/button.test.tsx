@@ -49,4 +49,9 @@ describe('Button', () => {
     expect(screen.getByText('L')).toHaveClass('h-11');
     expect(screen.getByText('I')).toHaveClass('w-10');
   });
+
+  it('merges a custom className', () => {
+    render(<Button className="w-full">Wide</Button>);
+    expect(screen.getByRole('button')).toHaveClass('w-full', 'inline-flex');
+  });
 });
