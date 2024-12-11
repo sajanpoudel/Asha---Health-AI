@@ -54,4 +54,10 @@ describe('Button', () => {
     render(<Button className="w-full">Wide</Button>);
     expect(screen.getByRole('button')).toHaveClass('w-full', 'inline-flex');
   });
+
+  it('renders the child element when asChild is set', () => {
+    render(<Button asChild><a href="/home">Home</a></Button>);
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveClass('bg-primary');
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
 });
