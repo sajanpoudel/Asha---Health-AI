@@ -7,4 +7,9 @@ describe('Input', () => {
     render(<Input placeholder="Name" />);
     expect(screen.getByPlaceholderText('Name')).toBeInTheDocument();
   });
+
+  it('passes the type through', () => {
+    render(<Input type="email" placeholder="Mail" />);
+    expect(screen.getByPlaceholderText('Mail')).toHaveAttribute('type', 'email');
+  });
 });
