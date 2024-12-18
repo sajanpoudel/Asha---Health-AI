@@ -12,4 +12,11 @@ describe('Input', () => {
     render(<Input type="email" placeholder="Mail" />);
     expect(screen.getByPlaceholderText('Mail')).toHaveAttribute('type', 'email');
   });
+
+  it('reports changes', () => {
+    const onChange = vi.fn();
+    render(<Input placeholder="Name" onChange={onChange} />);
+    fireEvent.change(screen.getByPlaceholderText('Name'), { target: { value: 'Ada' } });
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
 });
