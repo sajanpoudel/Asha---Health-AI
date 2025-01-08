@@ -19,4 +19,9 @@ describe('Input', () => {
     fireEvent.change(screen.getByPlaceholderText('Name'), { target: { value: 'Ada' } });
     expect(onChange).toHaveBeenCalledTimes(1);
   });
+
+  it('can be disabled', () => {
+    render(<Input placeholder="Name" disabled />);
+    expect(screen.getByPlaceholderText('Name')).toBeDisabled();
+  });
 });
