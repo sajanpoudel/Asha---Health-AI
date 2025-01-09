@@ -24,4 +24,9 @@ describe('Input', () => {
     render(<Input placeholder="Name" disabled />);
     expect(screen.getByPlaceholderText('Name')).toBeDisabled();
   });
+
+  it('merges a custom className', () => {
+    render(<Input placeholder="Name" className="bg-transparent" />);
+    expect(screen.getByPlaceholderText('Name')).toHaveClass('bg-transparent', 'rounded-md');
+  });
 });
