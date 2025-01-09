@@ -7,4 +7,9 @@ describe('Card', () => {
     render(<Card><CardContent>Body</CardContent></Card>);
     expect(screen.getByText('Body')).toBeInTheDocument();
   });
+
+  it('renders the title as a heading', () => {
+    render(<CardTitle>Title</CardTitle>);
+    expect(screen.getByText('Title')).toHaveClass('text-2xl', 'font-semibold');
+  });
 });
