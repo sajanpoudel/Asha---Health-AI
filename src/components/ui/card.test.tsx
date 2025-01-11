@@ -12,4 +12,9 @@ describe('Card', () => {
     render(<CardTitle>Title</CardTitle>);
     expect(screen.getByText('Title')).toHaveClass('text-2xl', 'font-semibold');
   });
+
+  it('renders the description as muted text', () => {
+    render(<CardDescription>About</CardDescription>);
+    expect(screen.getByText('About')).toHaveClass('text-muted-foreground');
+  });
 });
