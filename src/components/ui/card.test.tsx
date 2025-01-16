@@ -17,4 +17,10 @@ describe('Card', () => {
     render(<CardDescription>About</CardDescription>);
     expect(screen.getByText('About')).toHaveClass('text-muted-foreground');
   });
+
+  it('lays out header and footer', () => {
+    render(<><CardHeader>H</CardHeader><CardFooter>F</CardFooter></>);
+    expect(screen.getByText('H')).toHaveClass('flex-col');
+    expect(screen.getByText('F')).toHaveClass('items-center');
+  });
 });
