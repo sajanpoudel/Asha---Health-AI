@@ -23,4 +23,9 @@ describe('Card', () => {
     expect(screen.getByText('H')).toHaveClass('flex-col');
     expect(screen.getByText('F')).toHaveClass('items-center');
   });
+
+  it('merges a custom className on the card', () => {
+    render(<Card className="max-w-sm">C</Card>);
+    expect(screen.getByText('C')).toHaveClass('max-w-sm', 'rounded-lg');
+  });
 });
