@@ -7,4 +7,9 @@ describe('Alert', () => {
     render(<Alert>Careful</Alert>);
     expect(screen.getByRole('alert')).toHaveTextContent('Careful');
   });
+
+  it('uses the default variant', () => {
+    render(<Alert>Info</Alert>);
+    expect(screen.getByRole('alert')).toHaveClass('bg-background');
+  });
 });
