@@ -12,4 +12,9 @@ describe('Alert', () => {
     render(<Alert>Info</Alert>);
     expect(screen.getByRole('alert')).toHaveClass('bg-background');
   });
+
+  it('supports the destructive variant', () => {
+    render(<Alert variant="destructive">Error</Alert>);
+    expect(screen.getByRole('alert')).toHaveClass('text-destructive');
+  });
 });
