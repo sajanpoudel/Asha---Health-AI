@@ -2,10 +2,11 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import ChatArea from './ChatArea';
 
-const chat = (messages: { type: 'user' | 'ai'; content: string }[]) => () => ({
-  id: '1',
-  messages,
-}) as unknown as Chat;
+const chat = (messages: { type: 'user' | 'ai'; content: string }[]) => () =>
+  ({
+    id: '1',
+    messages,
+  }) as unknown as Chat;
 
 describe('ChatArea', () => {
   it('shows every message of the current chat', () => {
@@ -30,7 +31,12 @@ describe('ChatArea', () => {
   });
 
   it('scrolls to the end when it renders', () => {
-    render(<ChatArea getCurrentChat={chat([{ type: 'ai', content: 'Hello' }])} isGeneratingResponse={false} />);
+    render(
+      <ChatArea
+        getCurrentChat={chat([{ type: 'ai', content: 'Hello' }])}
+        isGeneratingResponse={false}
+      />
+    );
     expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
   });
 
