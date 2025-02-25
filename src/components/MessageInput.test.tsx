@@ -51,7 +51,9 @@ describe('MessageInput', () => {
   it('reports typing through setInputMessage', () => {
     const props = baseProps();
     render(<MessageInput {...props} />);
-    fireEvent.change(screen.getByPlaceholderText('Type your message...'), { target: { value: 'Hi' } });
+    fireEvent.change(screen.getByPlaceholderText('Type your message...'), {
+      target: { value: 'Hi' },
+    });
     expect(props.setInputMessage).toHaveBeenCalledWith('Hi');
   });
 
