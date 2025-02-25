@@ -19,7 +19,12 @@ describe('Alert', () => {
   });
 
   it('renders a title and a description', () => {
-    render(<Alert><AlertTitle>Heads up</AlertTitle><AlertDescription>Details</AlertDescription></Alert>);
+    render(
+      <Alert>
+        <AlertTitle>Heads up</AlertTitle>
+        <AlertDescription>Details</AlertDescription>
+      </Alert>
+    );
     expect(screen.getByText('Heads up').tagName).toBe('H5');
     expect(screen.getByText('Details')).toHaveClass('text-sm');
   });
