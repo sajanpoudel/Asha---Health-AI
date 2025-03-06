@@ -17,7 +17,11 @@ describe('Button', () => {
 
   it('does not call onClick when disabled', () => {
     const onClick = vi.fn();
-    render(<Button disabled onClick={onClick}>Go</Button>);
+    render(
+      <Button disabled onClick={onClick}>
+        Go
+      </Button>
+    );
     fireEvent.click(screen.getByRole('button'));
     expect(onClick).not.toHaveBeenCalled();
   });
@@ -38,13 +42,24 @@ describe('Button', () => {
   });
 
   it('supports the ghost and link variants', () => {
-    render(<><Button variant="ghost">Ghost</Button><Button variant="link">Link</Button></>);
+    render(
+      <>
+        <Button variant="ghost">Ghost</Button>
+        <Button variant="link">Link</Button>
+      </>
+    );
     expect(screen.getByText('Link')).toHaveClass('underline-offset-4');
     expect(screen.getByText('Ghost')).not.toHaveClass('bg-primary');
   });
 
   it('supports the small, large and icon sizes', () => {
-    render(<><Button size="sm">S</Button><Button size="lg">L</Button><Button size="icon">I</Button></>);
+    render(
+      <>
+        <Button size="sm">S</Button>
+        <Button size="lg">L</Button>
+        <Button size="icon">I</Button>
+      </>
+    );
     expect(screen.getByText('S')).toHaveClass('h-9');
     expect(screen.getByText('L')).toHaveClass('h-11');
     expect(screen.getByText('I')).toHaveClass('w-10');
@@ -56,7 +71,11 @@ describe('Button', () => {
   });
 
   it('renders the child element when asChild is set', () => {
-    render(<Button asChild><a href="/home">Home</a></Button>);
+    render(
+      <Button asChild>
+        <a href="/home">Home</a>
+      </Button>
+    );
     expect(screen.getByRole('link', { name: 'Home' })).toHaveClass('bg-primary');
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
