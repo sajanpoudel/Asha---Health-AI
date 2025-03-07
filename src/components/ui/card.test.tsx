@@ -4,7 +4,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 describe('Card', () => {
   it('renders a card with its content', () => {
-    render(<Card><CardContent>Body</CardContent></Card>);
+    render(
+      <Card>
+        <CardContent>Body</CardContent>
+      </Card>
+    );
     expect(screen.getByText('Body')).toBeInTheDocument();
   });
 
@@ -19,7 +23,12 @@ describe('Card', () => {
   });
 
   it('lays out header and footer', () => {
-    render(<><CardHeader>H</CardHeader><CardFooter>F</CardFooter></>);
+    render(
+      <>
+        <CardHeader>H</CardHeader>
+        <CardFooter>F</CardFooter>
+      </>
+    );
     expect(screen.getByText('H')).toHaveClass('flex-col');
     expect(screen.getByText('F')).toHaveClass('items-center');
   });
