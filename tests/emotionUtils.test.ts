@@ -81,11 +81,17 @@ test('addEmotionalNuance falls back to the warm cues for unknown emotions', () =
 });
 
 test('addPersonalTouch prefixes a pet name when the dice allow it', () => {
-  assert.equal(withRandom(0.0, () => addPersonalTouch('Rest well.')), 'Sweetheart, Rest well.');
+  assert.equal(
+    withRandom(0.0, () => addPersonalTouch('Rest well.')),
+    'Sweetheart, Rest well.'
+  );
 });
 
 test('addPersonalTouch leaves the text alone otherwise', () => {
-  assert.equal(withRandom(0.9, () => addPersonalTouch('Rest well.')), 'Rest well.');
+  assert.equal(
+    withRandom(0.9, () => addPersonalTouch('Rest well.')),
+    'Rest well.'
+  );
 });
 
 test('addSupportiveLanguage prefixes a supportive phrase most of the time', () => {
@@ -94,5 +100,8 @@ test('addSupportiveLanguage prefixes a supportive phrase most of the time', () =
 });
 
 test('addSupportiveLanguage can leave the text unchanged', () => {
-  assert.equal(withRandom(0.99, () => addSupportiveLanguage('Take a deep breath.')), 'Take a deep breath.');
+  assert.equal(
+    withRandom(0.99, () => addSupportiveLanguage('Take a deep breath.')),
+    'Take a deep breath.'
+  );
 });
