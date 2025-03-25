@@ -40,7 +40,7 @@ test('simplifyText adds pause markers', () => {
 });
 
 test('decodeHtmlEntities decodes numeric apostrophes and spaces', () => {
-  assert.equal(decodeHtmlEntities("it&#039;s&nbsp;fine"), "it's fine");
+  assert.equal(decodeHtmlEntities('it&#039;s&nbsp;fine'), "it's fine");
 });
 
 test('escapeHtml leaves plain text untouched', () => {
